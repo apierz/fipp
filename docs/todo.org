@@ -4,6 +4,7 @@
 - [ ] start
 
 * content view controller
+** scrolling bars
 ** horizontal scrolling
    - [ ] controls & logic [/]
    - [ ] scrolling indicators

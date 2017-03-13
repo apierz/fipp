@@ -148,6 +148,13 @@ class CCV_con():
                     line+=1
 
         self.content_lines = line
+        f = open("raw_data.txt", "w")
+        for item in plist:
+            if type(item) is str:
+                f.write(item)
+            else:
+                f.write(str(item))
+        f.close()
 
                 
     def update_top_string(self, top_string):
@@ -212,10 +219,6 @@ class CCV_con():
 
     # def scrollright():
 
-    # def del_list_item():
-
-    # def app_list_item():
-
     def _get_filler_string(self, str=""):
         filler_string = ""
         while len(str) + len(filler_string) <= self.width - 2:
@@ -273,6 +276,7 @@ class MyHTMLParser(HTMLParser):
     def __init__(self, *, convert_charrefs=True):
 
         self.content = []
+        self.link_data = ""
         self.convert_charrefs = convert_charrefs
         self.reset()
 
@@ -283,11 +287,6 @@ class MyHTMLParser(HTMLParser):
             self.content.append(2)
         if tag == "strong" or tag == "b":
             self.content.append(10)
-        for name, value in attrs:
-            if name == "href":
-                if len(value) >= 40:
-                    value = goo_shorten_url(value)
-                self.content.append("(" + value + ")")
         if tag == "li":
             self.content.append(6)
         if tag == "blockquote":
@@ -308,6 +307,11 @@ class MyHTMLParser(HTMLParser):
             self.content.append(24)
         if tag == "h6":
             self.content.append(26)
+        for name, value in attrs:
+            if name == "href":
+                if len(value) >= 40:
+                    value = goo_shorten_url(value)
+                self.content.append("(" + value + ")")
 
     def handle_endtag(self, tag):
         if tag == "p":
@@ -315,6 +319,14 @@ class MyHTMLParser(HTMLParser):
         if tag == "em" or tag == "i":
             self.content.append(3)
         if tag == "a":
+            self.content[-1], self.content[-2] = self.content[-2], self.content[-1]
+            self.content[-2] = self.content[-2] + self.content[-1]
+            hold = self.content[-1]
+            del self.content[-1]
+            if " " in hold:
+                for word in hold.split():
+                    self.content.append(word)
+
             self.content.append(5)
         if tag == "li":
             self.content.append(7)
@@ -341,6 +353,12 @@ class MyHTMLParser(HTMLParser):
 
 
     def handle_data(self, data):
+        if len(self.content) >=2:
+            if self.content[-2] == 4:
+                data = "[" + data + "]"
+                self.content.append(data)
+                return
+        
         words = data.split()
         for word in words:
             word = word.strip().replace("\t", " ").replace("\n"," ")

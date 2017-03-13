@@ -35,8 +35,6 @@ def main(stdscr):
                     "I am a bottom string")
 
 
-    cvcon.content_pad.addstr(0,0, "STRING")
-    cvcon.content_pad.refresh(0,0, 1,1, 4,4)
     cvcon.refresh_display()
 
     while True:

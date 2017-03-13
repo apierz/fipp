@@ -1,0 +1,7 @@
+account_info.txt
+curses-tutorial.py
+*.pyc
+feed-lister.py
+pre-alpha-testing.py
+getdata
+__pycache__

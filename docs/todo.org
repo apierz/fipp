@@ -1,0 +1,19 @@
+#+title:  fipp todo list
+
+*   core
+- [ ] start
+
+* content view controller
+** horizontal scrolling
+   - [ ] controls & logic [/]
+   - [ ] scrolling indicators
+** html parser [0/8]
+   - [ ] tables
+   - [ ] links
+   - [ ] forms?
+   - [ ] code
+   - [ ] pre-formatted text
+   - [ ] underline
+   - [ ] strikeout
+   - [ ] inline quotation
+   - [ ] imgs & alt text

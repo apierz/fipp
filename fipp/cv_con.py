@@ -1,0 +1,365 @@
+import curses
+from html.parser import HTMLParser
+import requests
+import json
+
+
+
+class CCV_con():
+    # Curses Content View Controller
+    def __init__(self, stdscr, content, content_width, top_string, bottom_string):
+        
+        self.bottom_pad = curses.newpad(1, curses.COLS)
+        self.top_pad = curses.newpad(1, curses.COLS)
+        self.top_string = top_string
+        self.bottom_string = bottom_string
+        self.content = content
+        self.v_scroll_position = 0
+        self.h_scroll_position = 0
+        self.stdscr = stdscr
+        self.width = curses.COLS
+        self.content_width = content_width
+        self.content_lines = 0
+
+        lines = curses.LINES if int(len(content)/50)+1 <= curses.LINES else int(len(content)/50)+1
+        self.content_pad = curses.newpad(lines, self.width)
+
+        filler_string = self._get_filler_string()
+        for x in range (0,lines):
+            self.content_pad.addstr(x, 0, filler_string, curses.A_REVERSE)
+        
+    def resize_con(self, y, x):
+        self.width = x
+        curses.resizeterm(y, x)
+        self.refresh_display
+        self.stdscr.refresh()
+
+    def refresh_display(self):
+        self.stdscr.clear()
+        self.stdscr.refresh()
+
+        self.update_top_string(self.top_string)
+        self.update_bottom_string(self.bottom_string)
+
+        self._string_content_handler()
+
+        self.content_pad.refresh(0,0, 1,0, curses.LINES-2, self.width)
+
+    def _string_content_handler(self):
+        if "</html>" in self.content:
+                parser = MyHTMLParser()
+                parser.feed(self.content)
+                parsed_string = parser.content
+
+        else:
+            parsed_string = []
+            string_split_lines = self.content.splitlines()
+
+            for line in string_split_lines:
+                strings = line.split()
+                for string in strings:
+                    parsed_string.append(string)
+                    parsed_string.append(" ")
+                parsed_string.append(66)
+
+        self._parsed_list_content_handler(parsed_string)
+        
+
+    def _parsed_list_content_handler(self, plist):
+        line = 0
+        width = self.content_width
+        gap = " "
+        margin = ""
+        text_line = ""
+        ordered_list = False
+        list_counter = 1
+
+        for piece in plist:
+            if piece:
+                if piece == 2:
+                    text_line += " *"
+                    gap = ""
+                if piece == 8:
+                    margin = "    "
+                    text_line = margin
+                if piece == 9:
+                    margin = ""
+                    text_line = margin
+                if piece == 10:
+                    text_line += " **"
+                    gap = ""
+                if piece == 12:
+                    text_line = "# "
+                if piece == 14:
+                    text_line = "## "
+                if piece == 16:
+                    text_line = "### "
+                if piece == 18:
+                    text_line = "#### "
+                if piece == 24:
+                    text_line = "##### "
+                if piece == 26:
+                    text_line = "###### "
+                if piece == 20:
+                    ordered_list = True
+                if piece == 22:
+                    ordered_list = False
+                if isinstance(piece, str):
+                    if len(piece) + len(gap) + len(text_line) + len(margin) > width:
+                        self.content_pad.addstr(line,0, text_line, curses.A_REVERSE)
+                        text_line = margin
+                        line+=1
+                    if gap == " " and piece in (",",".","!","?","\"","\'", "*"):
+                        gap = ""
+                    if len(text_line) + len(gap) + len(piece) + len(margin) <= width:
+                        text_line = text_line + gap + piece
+                        if gap == "":
+                            gap = " "
+                if piece == 1:
+                    self.content_pad.addstr(line,0, text_line, curses.A_REVERSE)
+                    text_line = margin
+                    line+=2
+                if piece == 3:
+                    text_line += "*"
+                if piece == 6:
+                    if ordered_list == True:
+                        text_line+= str(list_counter)+". "
+                        list_counter+=1
+                    if ordered_list == False:
+                        text_line += "* "
+                if piece == 7:
+                    self.content_pad.addstr(line,0, text_line, curses.A_REVERSE)
+                    text_line = margin
+                    line+=1
+                if piece == 11:
+                    text_line += "**"
+                if piece in (13,15,17,19,25,27):
+                    self.content_pad.addstr(line,0, text_line, curses.A_REVERSE)
+                    text_line = margin
+                    line+=2
+                if piece == 21:
+                    list_counter == 1
+                    line+=1
+                if piece == 23:
+                    line+=1
+                if piece == 66:
+                    self.content_pad.addstr(line,0, text_line, curses.A_REVERSE)
+                    text_line = margin
+                    line+=1
+
+        self.content_lines = line
+
+                
+    def update_top_string(self, top_string):
+        self.top_pad.move(0,0)
+        self.top_pad.clrtoeol()
+        self.top_pad.move(0,0)
+        top_string = top_string + self._get_filler_string(top_string)
+
+        # top_string = top_string[:-2]
+        # top_string = str(self.v_scroll_position)
+
+        if self.v_scroll_position > 0:
+            top_string = top_string[:-2]
+            top_string+= "↑ "
+
+        if self.v_scroll_position <= 0:
+            top_string = top_string[:-2]
+            top_string+= "  "
+
+        self.top_pad.addstr(0,0, top_string)
+        self.top_string = top_string
+        self.top_pad.refresh(0,0, 0,0, 0,self.width)
+
+    def update_bottom_string(self, bottom_string):
+        self.bottom_pad.move(0,0)
+        self.bottom_pad.clrtoeol()
+        self.bottom_pad.move(0,0)
+        bottom_string = bottom_string + self._get_filler_string(bottom_string)
+        
+        if self.v_scroll_position < self.content_lines + curses.LINES -2:
+            bottom_string = bottom_string[:-2]
+            bottom_string+= "↓ "
+
+        if self.v_scroll_position == self.content_lines - curses.LINES + 2:
+            bottom_string = bottom_string[:-2]
+            bottom_string+= "  "
+
+        self.bottom_pad.addstr(0,0, bottom_string)
+        self.bottom_string = bottom_string
+        self.bottom_pad.refresh(0,0, curses.LINES-1,0,
+                                    curses.LINES-1,self.width)
+
+    def scrollup(self):
+        if self.v_scroll_position >0:
+            self.v_scroll_position-=1
+            self.content_pad.refresh(self.v_scroll_position, self.h_scroll_position,
+                                         1, 0,
+                                         curses.LINES -2, self.width)
+            self.update_top_string(self.top_string)
+            self.update_bottom_string(self.bottom_string)
+
+    def scrolldown(self):
+        if self.v_scroll_position < self.content_lines - curses.LINES+2:
+            self.v_scroll_position+=1
+            self.content_pad.refresh(self.v_scroll_position, self.h_scroll_position,
+                                         1, 0,
+                                         curses.LINES -2, self.width)
+            self.update_top_string(self.top_string)
+            self.update_bottom_string(self.bottom_string)
+
+    # def scrolleft():
+
+    # def scrollright():
+
+    # def del_list_item():
+
+    # def app_list_item():
+
+    def _get_filler_string(self, str=""):
+        filler_string = ""
+        while len(str) + len(filler_string) <= self.width - 2:
+            filler_string+= " "
+        return filler_string
+
+    def goo_shorten_url(self, url):
+        post_url = 'https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyCoMyPAgrC7LEzSMZV0Mr6JxRhp1JZ4yt4'
+        payload = {'longUrl': url}
+        headers = {'content-type': 'application/json'}
+        r = requests.post(post_url, data=json.dumps(payload), headers=headers)
+        response_data = r.json()
+        return response_data['id']
+
+# class cdlv_con(cv_con):
+    #Curses Dynamic List View Controller
+    
+# class cflv_con(cv_con):
+    #Curses Fixed List View Controller
+
+    
+class MyHTMLParser(HTMLParser):
+    #HTMLParser, turns and html string into Markdown formatted plain-text
+
+    # Tag Codes:
+    # 1: End of p
+    # 2: Start of italic
+    # 3: End of italic
+    # 4: Start of a
+    # 5: end of a
+    # 6: start of list item
+    # 7: end of list item
+    # 8: start of bq
+    # 9: end of bq
+    #10: start of bold
+    #11: end of bold
+    #12: start h1
+    #13: end h1
+    #14: start h2
+    #15: end h2
+    #16: start h3
+    #17: end h3
+    #18: start h4
+    #19: end h4
+    #20: start of OL
+    #21: end of OL
+    #22: start of UL
+    #23: end of UL
+    #66: /n in plain text content
+    #25: start h5
+    #26: end h5
+    #27: start h6
+    #28: end h6
+
+    def __init__(self, *, convert_charrefs=True):
+
+        self.content = []
+        self.convert_charrefs = convert_charrefs
+        self.reset()
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "a":
+            self.content.append(4)
+        if tag == "em" or tag == "i":
+            self.content.append(2)
+        if tag == "strong" or tag == "b":
+            self.content.append(10)
+        for name, value in attrs:
+            if name == "href":
+                if len(value) >= 40:
+                    value = goo_shorten_url(value)
+                self.content.append("(" + value + ")")
+        if tag == "li":
+            self.content.append(6)
+        if tag == "blockquote":
+            self.content.append(8)
+        if tag == "h1":
+            self.content.append(12)
+        if tag == "h2":
+            self.content.append(14)
+        if tag == "h3":
+            self.content.append(16)
+        if tag == "h4":
+            self.content.append(18)
+        if tag == "ol":
+            self.content.append(20)
+        if tag == "ul":
+            self.content.append(22)
+        if tag == "h5":
+            self.content.append(24)
+        if tag == "h6":
+            self.content.append(26)
+
+    def handle_endtag(self, tag):
+        if tag == "p":
+            self.content.append(1)
+        if tag == "em" or tag == "i":
+            self.content.append(3)
+        if tag == "a":
+            self.content.append(5)
+        if tag == "li":
+            self.content.append(7)
+        if tag == "blockquote":
+            self.content.append(9)
+        if tag == "strong" or tag == "b":
+            self.content.append(11)
+        if tag == "h1":
+            self.content.append(13)
+        if tag == "h2":
+            self.content.append(15)
+        if tag == "h3":
+            self.content.append(17)
+        if tag == "h4":
+            self.content.append(19)
+        if tag == "ol":
+            self.content.append(21)
+        if tag == "ul":
+            self.content.append(23)
+        if tag == "h5":
+            self.content.append(25)
+        if tag == "h6":
+            self.content.append(27)
+
+
+    def handle_data(self, data):
+        words = data.split()
+        for word in words:
+            word = word.strip().replace("\t", " ").replace("\n"," ")
+            self.content.append(word)
+
+
+def goo_shorten_url(url):
+    post_url = 'https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyCoMyPAgrC7LEzSMZV0Mr6JxRhp1JZ4yt4'
+    payload = {'longUrl': url}
+    headers = {'content-type': 'application/json'}
+    r = requests.post(post_url, data=json.dumps(payload), headers=headers)
+    response_data = r.json()
+    return response_data['id']
+
+def is_html(text):
+    elements = set(HTMLSanitizerMixin.acceptable_elements)
+
+    parser = TestHTMLParser()
+    parser.feed(text)
+
+    return True if parser.elements.intersection(elements) else False
+       

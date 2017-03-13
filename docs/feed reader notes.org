@@ -1,0 +1,13 @@
+#+title: Feed Reader Notes
+
+Client Name: andy@andypierz.com
+Client Key:  9a42668650e8adfa60ef6098ffead7e3
+
+Authentication URL:
+https://feedwrangler.net/api/v2/users/authorize?email=andy@andypierz.com&password=3JWFuvWxeYaP&client_key=9a42668650e8adfa60ef6098ffead7e3
+
+
+
+bitly key: 072b5502dfc64e095adbdff63796efeb56517083
+
+google-url: AIzaSyCoMyPAgrC7LEzSMZV0Mr6JxRhp1JZ4yt4

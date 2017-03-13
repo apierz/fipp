@@ -1,0 +1,37 @@
+#+title: Design Document for Feed Reader Project
+
+*  Goals
+
+The goal of this project is to make a CLI RSS feed reader application that
+works with Feed Wrangler (and eventually Feedly and others) to provide synching
+across devices.
+
+The project will be written in Python and use the Python curses library to
+generate the user interface.
+
+* Application Life Cycle
+
+** App is started
+** Check if user has added an account
+*** No account found:
+**** User told no account has been found
+**** User is prompted to Type in account email and password
+**** Account Validation Process
+***** If account is validated 
+****** return to start of app cycle
+****** store access_token from api server
+***** If account is not validated
+****** Relay error and prompt user to re-enter email/password
+*** Account Exists:
+**** Unread Feeds are retrieved from server
+**** Key commands displayed at top of screen
+**** Unread feed item titles are listed in a scrolling curses pad in cron order
+**** The Most recent item is highlighted
+**** By using the arrow keys the user can highlight the other items in the list
+**** The user can "star" the highlighted item
+**** if the user press enter:
+***** The body text of the highlighted item is loaded in a new pad
+***** New key commands are displayed at the top (star, etc)
+***** User can press a command to go back to main feed list
+***** User can press a command to go to prev/next iterm in feed list is poss.
+**** if the user exits, the program quits

@@ -5,16 +5,24 @@
 
 * content view controller
 ** scrolling bars
-** horizontal scrolling
-   - [ ] controls & logic [/]
-   - [ ] scrolling indicators
-** html parser [0/8]
+** horizontal scrolling [2/2]
+   - [X] controls & logic 
+   - [X] scrolling indicators
+** CURRENT html parser [4/9]
    - [ ] tables
-   - [ ] links
+   - [X] links
    - [ ] forms?
-   - [ ] code
+   - [X] code
    - [ ] pre-formatted text
-   - [ ] underline
-   - [ ] strikeout
+   - [X] underline
+   - [X] strikeout
    - [ ] inline quotation
    - [ ] imgs & alt text
+   
+* Dynamic List view controller
+
+* Static List view controller
+
+* accounts
+** add feedbin
+** add feedly

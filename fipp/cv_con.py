@@ -4,7 +4,6 @@ import requests
 import json
 
 
-
 class CCV_con():
     # Curses Content View Controller
     def __init__(self, stdscr, content, content_width, top_string, bottom_string):
@@ -22,9 +21,9 @@ class CCV_con():
         self.content_lines = 0
 
         lines = curses.LINES if int(len(content)/50)+1 <= curses.LINES else int(len(content)/50)+1
-        self.content_pad = curses.newpad(lines, self.width)
+        self.content_pad = curses.newpad(lines, self.content_width + 1 )
 
-        filler_string = self._get_filler_string()
+        filler_string = self._get_filler_string_content()
         for x in range (0,lines):
             self.content_pad.addstr(x, 0, filler_string, curses.A_REVERSE)
         
@@ -43,10 +42,10 @@ class CCV_con():
 
         self._string_content_handler()
 
-        self.content_pad.refresh(0,0, 1,0, curses.LINES-2, self.width)
+        self.content_pad.refresh(0,0, 1,0, curses.LINES-2, curses.COLS - 1)
 
     def _string_content_handler(self):
-        if "</html>" in self.content:
+        if "</html>" in self.content or "<html>" in self.content:
                 parser = MyHTMLParser()
                 parser.feed(self.content)
                 parsed_string = parser.content
@@ -68,13 +67,16 @@ class CCV_con():
     def _parsed_list_content_handler(self, plist):
         line = 0
         width = self.content_width
-        gap = " "
+        gap = ""
         margin = ""
         text_line = ""
+        first_half = ""
         ordered_list = False
         list_counter = 1
 
-        for piece in plist:
+        for count, piece in enumerate(plist):
+            first_half = ""
+
             if piece:
                 if piece == 2:
                     text_line += " *"
@@ -89,25 +91,42 @@ class CCV_con():
                     text_line += " **"
                     gap = ""
                 if piece == 12:
-                    text_line = "# "
+                    text_line = "     # "
                 if piece == 14:
-                    text_line = "## "
+                    text_line = "    ## "
                 if piece == 16:
-                    text_line = "### "
+                    text_line = "   ### "
                 if piece == 18:
-                    text_line = "#### "
+                    text_line = "  #### "
                 if piece == 24:
-                    text_line = "##### "
+                    text_line = " ##### "
                 if piece == 26:
                     text_line = "###### "
                 if piece == 20:
                     ordered_list = True
                 if piece == 22:
                     ordered_list = False
+                if piece == 29:
+                    text_line += " __"
+                    gap = ""
+                if piece == 31:
+                    text_line += " `"
+                    gap = ""
+                if piece == 33:
+                    text_line += " ~~"
+                    gap = ""
                 if isinstance(piece, str):
+                    if len(piece) > width:
+                        while len(first_half) + len(text_line) +len(gap) + len(margin) < width:
+                            first_half+=piece[:1]
+                            piece = piece[1:]
+                        plist.insert(count+1, piece)
+                        piece = first_half
+                            
                     if len(piece) + len(gap) + len(text_line) + len(margin) > width:
                         self.content_pad.addstr(line,0, text_line, curses.A_REVERSE)
                         text_line = margin
+                        gap = ""
                         line+=1
                     if gap == " " and piece in (",",".","!","?","\"","\'", "*"):
                         gap = ""
@@ -119,6 +138,7 @@ class CCV_con():
                     self.content_pad.addstr(line,0, text_line, curses.A_REVERSE)
                     text_line = margin
                     line+=2
+                    gap = ""
                 if piece == 3:
                     text_line += "*"
                 if piece == 6:
@@ -130,11 +150,13 @@ class CCV_con():
                 if piece == 7:
                     self.content_pad.addstr(line,0, text_line, curses.A_REVERSE)
                     text_line = margin
+                    gap = ""
                     line+=1
                 if piece == 11:
                     text_line += "**"
                 if piece in (13,15,17,19,25,27):
                     self.content_pad.addstr(line,0, text_line, curses.A_REVERSE)
+                    gap = ""
                     text_line = margin
                     line+=2
                 if piece == 21:
@@ -142,8 +164,13 @@ class CCV_con():
                     line+=1
                 if piece == 23:
                     line+=1
+                if piece == 30:
+                    text_line += "__"
+                if piece == 34:
+                    text_line += "~~"
                 if piece == 66:
                     self.content_pad.addstr(line,0, text_line, curses.A_REVERSE)
+                    gap = ""
                     text_line = margin
                     line+=1
 
@@ -161,10 +188,7 @@ class CCV_con():
         self.top_pad.move(0,0)
         self.top_pad.clrtoeol()
         self.top_pad.move(0,0)
-        top_string = top_string + self._get_filler_string(top_string)
-
-        # top_string = top_string[:-2]
-        # top_string = str(self.v_scroll_position)
+        top_string = top_string + self._get_filler_string_tb(top_string)
 
         if self.v_scroll_position > 0:
             top_string = top_string[:-2]
@@ -175,25 +199,42 @@ class CCV_con():
             top_string+= "  "
 
         self.top_pad.addstr(0,0, top_string)
-        self.top_string = top_string
         self.top_pad.refresh(0,0, 0,0, 0,self.width)
 
     def update_bottom_string(self, bottom_string):
         self.bottom_pad.move(0,0)
         self.bottom_pad.clrtoeol()
         self.bottom_pad.move(0,0)
-        bottom_string = bottom_string + self._get_filler_string(bottom_string)
+        bottom_string = "  " + self.bottom_string
+        bottom_string = bottom_string + self._get_filler_string_tb(bottom_string)
         
         if self.v_scroll_position < self.content_lines + curses.LINES -2:
+            holder = bottom_string[-1]
             bottom_string = bottom_string[:-2]
-            bottom_string+= "↓ "
+            bottom_string+= "↓" + holder
 
         if self.v_scroll_position == self.content_lines - curses.LINES + 2:
+            holder = bottom_string[-1]
             bottom_string = bottom_string[:-2]
-            bottom_string+= "  "
+            bottom_string+= " " + holder
+
+        if self.h_scroll_position != self.content_width - curses.COLS:
+            bottom_string = bottom_string[:-1]
+            bottom_string+= "→"
+
+        if self.h_scroll_position == self.content_width - curses.COLS:
+            bottom_string = bottom_string[:-1]
+            bottom_string+= " "
+
+        if self.h_scroll_position > 0:
+            bottom_string = bottom_string[1:]
+            bottom_string= "←" + bottom_string
+
+        if self.h_scroll_position == 0:
+            bottom_string = bottom_string[1:]
+            bottom_string= " " + bottom_string
 
         self.bottom_pad.addstr(0,0, bottom_string)
-        self.bottom_string = bottom_string
         self.bottom_pad.refresh(0,0, curses.LINES-1,0,
                                     curses.LINES-1,self.width)
 
@@ -202,7 +243,7 @@ class CCV_con():
             self.v_scroll_position-=1
             self.content_pad.refresh(self.v_scroll_position, self.h_scroll_position,
                                          1, 0,
-                                         curses.LINES -2, self.width)
+                                         curses.LINES -2, curses.COLS - 1)
             self.update_top_string(self.top_string)
             self.update_bottom_string(self.bottom_string)
 
@@ -211,19 +252,48 @@ class CCV_con():
             self.v_scroll_position+=1
             self.content_pad.refresh(self.v_scroll_position, self.h_scroll_position,
                                          1, 0,
-                                         curses.LINES -2, self.width)
+                                         curses.LINES -2, curses.COLS - 1)
             self.update_top_string(self.top_string)
             self.update_bottom_string(self.bottom_string)
 
-    # def scrolleft():
+    def scrollright(self):
+        if self.h_scroll_position < self.content_width - curses.COLS:
+            self.h_scroll_position+=1
+            self.content_pad.refresh(self.v_scroll_position, self.h_scroll_position,
+                                         1, 0,
+                                         curses.LINES -2, curses.COLS - 1)
+            self.update_top_string(self.top_string)
+            self.update_bottom_string(self.bottom_string)
 
-    # def scrollright():
 
-    def _get_filler_string(self, str=""):
+    def scrollleft(self):
+        if self.h_scroll_position != 0:
+            self.h_scroll_position-=1
+            self.content_pad.refresh(self.v_scroll_position, self.h_scroll_position,
+                                         1, 0,
+                                         curses.LINES -2, curses.COLS - 1)
+            self.update_top_string(self.top_string)
+            self.update_bottom_string(self.bottom_string)
+
+    def _get_filler_string_content(self, str=""):
+        # filler_string = ""
+        # while len(str) + len(filler_string) < self.content_width - 1:
+        #     filler_string+= " "
+        # filler_string+=" "
+
         filler_string = ""
-        while len(str) + len(filler_string) <= self.width - 2:
+        y, x = self.content_pad.getmaxyx()
+        for i in range(1, x):
+            filler_string+=" "
+        
+        return filler_string
+
+    def _get_filler_string_tb(self, str=""):
+        filler_string = ""
+        while len(str) + len(filler_string) < curses.COLS - 2:
             filler_string+= " "
         return filler_string
+
 
     def goo_shorten_url(self, url):
         post_url = 'https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyCoMyPAgrC7LEzSMZV0Mr6JxRhp1JZ4yt4'
@@ -272,6 +342,12 @@ class MyHTMLParser(HTMLParser):
     #26: end h5
     #27: start h6
     #28: end h6
+    #29: start of unarticulated
+    #30: end of unarticulated
+    #31: start of code
+    #32: end of code
+    #33: start of strikethrough
+    #34: end of strikethrough
 
     def __init__(self, *, convert_charrefs=True):
 
@@ -307,11 +383,20 @@ class MyHTMLParser(HTMLParser):
             self.content.append(24)
         if tag == "h6":
             self.content.append(26)
+        if tag == "u":
+            self.content.append(29)
+        if tag == "code":
+            self.content.append(31)
+        if tag == "s":
+            self.content.append(33)
+        if tag == "del":
+            self.content.append(33)
+        if tag == "ins":
+            self.content.append(29)
         for name, value in attrs:
             if name == "href":
-                if len(value) >= 40:
-                    value = goo_shorten_url(value)
                 self.content.append("(" + value + ")")
+            
 
     def handle_endtag(self, tag):
         if tag == "p":
@@ -320,12 +405,13 @@ class MyHTMLParser(HTMLParser):
             self.content.append(3)
         if tag == "a":
             self.content[-1], self.content[-2] = self.content[-2], self.content[-1]
-            self.content[-2] = self.content[-2] + self.content[-1]
-            hold = self.content[-1]
-            del self.content[-1]
-            if " " in hold:
-                for word in hold.split():
-                    self.content.append(word)
+            if type(self.content[-2]) is str and type(self.content[-1]) is str:
+                self.content[-2] = self.content[-2] + self.content[-1]
+                hold = self.content[-1]
+                del self.content[-1]
+                if " " in hold:
+                    for word in hold.split():
+                        self.content.append(word)
 
             self.content.append(5)
         if tag == "li":
@@ -350,6 +436,16 @@ class MyHTMLParser(HTMLParser):
             self.content.append(25)
         if tag == "h6":
             self.content.append(27)
+        if tag == "u":
+            self.content.append(30)
+        if tag == "code":
+            self.content.append(32)
+        if tag == "s":
+            self.content.append(34)
+        if tag == "del":
+            self.content.append(34)
+        if tag == "ins":
+            self.content.append(30)
 
 
     def handle_data(self, data):

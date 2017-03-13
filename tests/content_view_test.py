@@ -20,8 +20,8 @@ def main(stdscr):
 
     stdscr.clear(); stdscr.refresh()
 
-    if path.exists("./tests/index.html"):
-        f = open("./tests/index.html", "r")
+    if path.exists("./tests/dfarticle.html"):
+        f = open("./tests/dfarticle.html", "r")
         if f.mode == 'r':
             content = f.read()
             f.close()
@@ -30,7 +30,7 @@ def main(stdscr):
 
     cvcon = CCV_con(stdscr,
                     content,
-                    80,
+                    200,
                     "I am a top string | h scroll position: ",
                     "I am a bottom string")
 
@@ -49,6 +49,11 @@ def main(stdscr):
             cvcon.scrolldown()
         elif c == curses.KEY_UP or c == ord('k'):
             cvcon.scrollup()
+        elif c == curses.KEY_RIGHT or c == ord('l'):
+            cvcon.scrollright()
+        elif c == curses.KEY_LEFT or c == ord('h'):
+            cvcon.scrollleft()
+
         elif c == ord('q'):
             break  # Exit the while loop
 

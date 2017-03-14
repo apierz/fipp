@@ -29,7 +29,7 @@ def main(stdscr):
     cvcon = CCV_con(stdscr,
                     content,
                     200,
-                    "I am a top string | h scroll position: ",
+                    "I am a top string",
                     "I am a bottom string")
 
 

@@ -3,30 +3,63 @@ from html.parser import HTMLParser
 import requests
 import json
 
+class CV_bar():
+    def __init__(self, content_string, location):
+        self.bar_content = content_string
+        self.pad = curses.newpad(1, curses.COLS)
+        self.left_flags = [" ", " "]
+        self.right_flags = [" ", " "]
+        self.width = curses.COLS + 1
+        self.location = location
+
+    def _get_filler_string_tb(self, str=""):
+        filler_string = ""
+        while len(str) + len(filler_string) < curses.COLS - 2:
+            filler_string+= " "
+        return filler_string
+
+
+    def update_bar(self):
+        self.pad.move(0,0)
+        self.pad.clrtoeol()
+        self.pad.move(0,0)
+
+        bar_string = self.left_flags[0] + self.left_flags[1] + " " + self.bar_content + self._get_filler_string_tb(self.bar_content + "      ") + " " + self.right_flags[0] + self.right_flags[1]
+
+        
+        self.pad.addstr(0,0, bar_string)
+
+        if self.location == "top":
+            self.pad.refresh(0,0, 0,0, 0,self.width)
+        if self.location == "bottom":
+            self.pad.refresh(0,0, curses.LINES-1,0,
+                                    curses.LINES-1,self.width)
+
+    # def trun_content(self):
 
 class CCV_con():
     # Curses Content View Controller
     def __init__(self, stdscr, content, content_width, top_string, bottom_string):
         
-        self.bottom_pad = curses.newpad(1, curses.COLS)
-        self.top_pad = curses.newpad(1, curses.COLS)
-        self.top_string = top_string
-        self.bottom_string = bottom_string
+        self.bottom_bar = CV_bar(bottom_string, "bottom")
+        self.top_bar = CV_bar(top_string, "top")
         self.content = content
         self.v_scroll_position = 0
         self.h_scroll_position = 0
         self.stdscr = stdscr
         self.width = curses.COLS
         self.content_width = content_width
+        self.padding_width = content_width + curses.COLS
         self.content_lines = 0
         self.table_holder = []
 
         lines = curses.LINES if int(len(content))+1 <= curses.LINES else int(len(content))+1
-        self.content_pad = curses.newpad(lines, self.content_width + 1 )
+        self.content_pad = curses.newpad(lines, self.padding_width )
 
         filler_string = self._get_filler_string_content()
         for x in range (0,lines):
             self.content_pad.addstr(x, 0, filler_string, curses.A_REVERSE)
+
         
     def resize_con(self, y, x):
         self.width = x
@@ -38,9 +71,10 @@ class CCV_con():
         self.stdscr.clear()
         self.stdscr.refresh()
 
-        self.update_top_string(self.top_string)
-        self.update_bottom_string(self.bottom_string)
-
+        self.scroll_ind_check()
+        self.top_bar.update_bar()
+        self.bottom_bar.update_bar()
+        
         self._string_content_handler()
 
         self.content_pad.refresh(0,0, 1,0, curses.LINES-2, curses.COLS - 1)
@@ -179,7 +213,8 @@ class CCV_con():
                 if piece == 34:
                     text_line += "~~"
                 if piece == 36:
-                    line+=2
+                    line+=1
+                    gap=""
                 if piece == 66:
                     self.content_pad.addstr(line,0, text_line, curses.A_REVERSE)
                     gap = ""
@@ -187,69 +222,39 @@ class CCV_con():
                     line+=1
 
         self.content_lines = line
+        self.scroll_ind_check()
+        self.bottom_bar.update_bar()
 
-                
-    def update_top_string(self, top_string):
-        self.top_pad.move(0,0)
-        self.top_pad.clrtoeol()
-        self.top_pad.move(0,0)
-        top_string = top_string + self._get_filler_string_tb(top_string)
+    def scroll_ind_check(self):
+            con1 = self.v_scroll_position < self.content_lines + curses.LINES -2
+            con2 = self.content_lines > curses.LINES-2
 
-        if self.v_scroll_position > 0:
-            top_string = top_string[:-2]
-            top_string+= "↑ "
+            if con1 and con2:
+                self.bottom_bar.right_flags[0] = "↓"
 
-        if self.v_scroll_position <= 0:
-            top_string = top_string[:-2]
-            top_string+= "  "
+            if self.v_scroll_position == self.content_lines - curses.LINES + 2:
+                self.bottom_bar.right_flags[0] = " "
 
-        self.top_pad.addstr(0,0, top_string)
-        self.top_pad.refresh(0,0, 0,0, 0,self.width)
+            if self.v_scroll_position > 0:
+                self.top_bar.right_flags[0] = "↑"
 
-    def update_bottom_string(self, bottom_string):
-        self.bottom_pad.move(0,0)
-        self.bottom_pad.clrtoeol()
-        self.bottom_pad.move(0,0)
-        bottom_string = "  " + self.bottom_string
-        bottom_string = bottom_string + self._get_filler_string_tb(bottom_string)
-        
+            if self.v_scroll_position <= 0:
+                self.top_bar.right_flags[0] = " "
 
-        con1 = self.v_scroll_position < self.content_lines + curses.LINES -2
-        con2 = self.content_lines > curses.LINES-2
-        
-        if con1 and con2:
-            holder = bottom_string[-1]
-            bottom_string = bottom_string[:-2]
-            bottom_string+= "↓" + holder
+            if self.h_scroll_position > 0:
+                self.bottom_bar.left_flags[1] = "←"
 
-        if self.v_scroll_position == self.content_lines - curses.LINES + 2:
-            holder = bottom_string[-1]
-            bottom_string = bottom_string[:-2]
-            bottom_string+= " " + holder
+            if self.h_scroll_position == 0:
+                self.bottom_bar.left_flags[1] = " "
 
+            con3 = self.h_scroll_position != self.content_width - curses.COLS
+            con4 = self.content_width > curses.COLS
 
-        con1 = self.h_scroll_position != self.content_width - curses.COLS
-        con2 = self.content_width < curses.COLS
+            if con3 and con4:
+                self.bottom_bar.right_flags[1] = "→"
 
-        if con1 and con2:
-            bottom_string = bottom_string[:-1]
-            bottom_string+= "→"
-
-        if self.h_scroll_position == self.content_width - curses.COLS:
-            bottom_string = bottom_string[:-1]
-            bottom_string+= " "
-
-        if self.h_scroll_position > 0:
-            bottom_string = bottom_string[1:]
-            bottom_string= "←" + bottom_string
-
-        if self.h_scroll_position == 0:
-            bottom_string = bottom_string[1:]
-            bottom_string= " " + bottom_string
-
-        self.bottom_pad.addstr(0,0, bottom_string)
-        self.bottom_pad.refresh(0,0, curses.LINES-1,0,
-                                    curses.LINES-1,self.width)
+            if self.h_scroll_position == self.content_width - curses.COLS:
+                self.bottom_bar.right_flags[1] = " "
 
     def scrollup(self):
         if self.v_scroll_position >0:
@@ -257,8 +262,10 @@ class CCV_con():
             self.content_pad.refresh(self.v_scroll_position, self.h_scroll_position,
                                          1, 0,
                                          curses.LINES -2, curses.COLS - 1)
-            self.update_top_string(self.top_string)
-            self.update_bottom_string(self.bottom_string)
+
+            self.scroll_ind_check()
+            self.top_bar.update_bar()
+            self.bottom_bar.update_bar()
 
     def scrolldown(self):
         if self.v_scroll_position < self.content_lines - curses.LINES+2:
@@ -266,8 +273,10 @@ class CCV_con():
             self.content_pad.refresh(self.v_scroll_position, self.h_scroll_position,
                                          1, 0,
                                          curses.LINES -2, curses.COLS - 1)
-            self.update_top_string(self.top_string)
-            self.update_bottom_string(self.bottom_string)
+
+            self.scroll_ind_check()
+            self.top_bar.update_bar()
+            self.bottom_bar.update_bar()
 
     def scrollright(self):
         if self.h_scroll_position < self.content_width - curses.COLS:
@@ -275,8 +284,10 @@ class CCV_con():
             self.content_pad.refresh(self.v_scroll_position, self.h_scroll_position,
                                          1, 0,
                                          curses.LINES -2, curses.COLS - 1)
-            self.update_top_string(self.top_string)
-            self.update_bottom_string(self.bottom_string)
+
+            self.scroll_ind_check()
+            self.top_bar.update_bar()
+            self.bottom_bar.update_bar()
 
 
     def scrollleft(self):
@@ -285,15 +296,12 @@ class CCV_con():
             self.content_pad.refresh(self.v_scroll_position, self.h_scroll_position,
                                          1, 0,
                                          curses.LINES -2, curses.COLS - 1)
-            self.update_top_string(self.top_string)
-            self.update_bottom_string(self.bottom_string)
+
+            self.scroll_ind_check()
+            self.top_bar.update_bar()
+            self.bottom_bar.update_bar()
 
     def _get_filler_string_content(self, str=""):
-        # filler_string = ""
-        # while len(str) + len(filler_string) < self.content_width - 1:
-        #     filler_string+= " "
-        # filler_string+=" "
-
         filler_string = ""
         y, x = self.content_pad.getmaxyx()
         for i in range(1, x):
@@ -301,11 +309,6 @@ class CCV_con():
         
         return filler_string
 
-    def _get_filler_string_tb(self, str=""):
-        filler_string = ""
-        while len(str) + len(filler_string) < curses.COLS - 2:
-            filler_string+= " "
-        return filler_string
 
     def _handle_table(self, count, line):
         x = 0
@@ -475,8 +478,12 @@ class MyHTMLParser(HTMLParser):
         for name, value in attrs:
             if name == "href":
                 self.content.append("(" + value + ")")
+            if name == "src":
+                self.content.append("![" + value + "]")
+                self.content.append(36)
             if name == "alt":
-                self.content.append("A picture of a(n) " + value)
+                self.content.append("(Imagine a picture of a(n) " + value + ")")
+                self.content.append(36)
             
 
     def handle_endtag(self, tag):

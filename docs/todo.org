@@ -8,11 +8,10 @@
 ** horizontal scrolling [2/2]
    - [X] controls & logic 
    - [X] scrolling indicators
-** CURRENT html parser [6/9]
+** CURRENT html parser [5/8]
    - [X] tables
    - [X] links
-   - [ ] forms?
-   - [X] code
+   - [ ] code
    - [ ] pre-formatted text
    - [X] underline
    - [X] strikeout

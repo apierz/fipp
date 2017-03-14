@@ -19,8 +19,9 @@ class CCV_con():
         self.width = curses.COLS
         self.content_width = content_width
         self.content_lines = 0
+        self.table_holder = []
 
-        lines = curses.LINES if int(len(content)/50)+1 <= curses.LINES else int(len(content)/50)+1
+        lines = curses.LINES if int(len(content))+1 <= curses.LINES else int(len(content))+1
         self.content_pad = curses.newpad(lines, self.content_width + 1 )
 
         filler_string = self._get_filler_string_content()
@@ -115,6 +116,15 @@ class CCV_con():
                 if piece == 33:
                     text_line += " ~~"
                     gap = ""
+                if piece == 38:
+                    self.table_holder = plist
+                    table_size = self._handle_table(count,line)
+                    line+=table_size
+                    for z, data in enumerate(plist[count:]):
+                        if data == 40:
+                            break
+                        else:
+                            del plist[z]
                 if isinstance(piece, str):
                     if len(piece) > width:
                         while len(first_half) + len(text_line) +len(gap) + len(margin) < width:
@@ -168,6 +178,8 @@ class CCV_con():
                     text_line += "__"
                 if piece == 34:
                     text_line += "~~"
+                if piece == 36:
+                    line+=2
                 if piece == 66:
                     self.content_pad.addstr(line,0, text_line, curses.A_REVERSE)
                     gap = ""
@@ -175,13 +187,6 @@ class CCV_con():
                     line+=1
 
         self.content_lines = line
-        f = open("raw_data.txt", "w")
-        for item in plist:
-            if type(item) is str:
-                f.write(item)
-            else:
-                f.write(str(item))
-        f.close()
 
                 
     def update_top_string(self, top_string):
@@ -208,7 +213,11 @@ class CCV_con():
         bottom_string = "  " + self.bottom_string
         bottom_string = bottom_string + self._get_filler_string_tb(bottom_string)
         
-        if self.v_scroll_position < self.content_lines + curses.LINES -2:
+
+        con1 = self.v_scroll_position < self.content_lines + curses.LINES -2
+        con2 = self.content_lines > curses.LINES-2
+        
+        if con1 and con2:
             holder = bottom_string[-1]
             bottom_string = bottom_string[:-2]
             bottom_string+= "↓" + holder
@@ -218,7 +227,11 @@ class CCV_con():
             bottom_string = bottom_string[:-2]
             bottom_string+= " " + holder
 
-        if self.h_scroll_position != self.content_width - curses.COLS:
+
+        con1 = self.h_scroll_position != self.content_width - curses.COLS
+        con2 = self.content_width < curses.COLS
+
+        if con1 and con2:
             bottom_string = bottom_string[:-1]
             bottom_string+= "→"
 
@@ -294,6 +307,54 @@ class CCV_con():
             filler_string+= " "
         return filler_string
 
+    def _handle_table(self, count, line):
+        x = 0
+        y = 0
+        table_row_count = 0
+        row = []
+        rows = []
+        row_string = ""
+        base_string = ""
+        while self.table_holder[x] != 40:
+            x+=1
+
+        table_slice = self.table_holder[count:x]
+        data_list = []
+        
+        for data in table_slice:
+            if type(data) is str:
+                data_list.append(data)
+        max_length = len(max(data_list,key=len)) + 3
+
+                             
+        for cell in table_slice:
+            if cell == 41:
+                rows.append(row)
+                row = []
+            if type(cell) is str:
+                row.append(cell)
+
+
+        for row_data in rows:
+            row_data_string = "|"
+            for data in row_data:
+                while len(data) < max_length:
+                    data = " " + data + " "
+                if len(data)%2 != 0:
+                    data=data[1:]
+                data += "|"
+                row_data_string += data
+            self.content_pad.addstr(line,0, row_data_string, curses.A_REVERSE)
+            line+=1
+            while len(base_string)< len(row_data_string):
+                base_string+="-"
+            self.content_pad.addstr(line,0,base_string, curses.A_REVERSE)
+            line+=1
+            table_row_count+=1
+
+        return (table_row_count * 2) + 1
+                
+        
 
     def goo_shorten_url(self, url):
         post_url = 'https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyCoMyPAgrC7LEzSMZV0Mr6JxRhp1JZ4yt4'
@@ -348,6 +409,16 @@ class MyHTMLParser(HTMLParser):
     #32: end of code
     #33: start of strikethrough
     #34: end of strikethrough
+    #35: start of img
+    #36: end of img
+    #37: start of table
+    #38: start of table row
+    #39: start of table data
+    #40: end of table 
+    #41: end of table row
+    #42: end of table data
+    #43: start of caption
+    #44: end of caption
 
     def __init__(self, *, convert_charrefs=True):
 
@@ -393,9 +464,19 @@ class MyHTMLParser(HTMLParser):
             self.content.append(33)
         if tag == "ins":
             self.content.append(29)
+        if tag == "table":
+            self.content.append(37)
+        if tag == "tr":
+            self.content.append(38)
+        if tag == "td" or tag == "th":
+            self.content.append(39)
+        if tag == "caption":
+            self.content.append(43)
         for name, value in attrs:
             if name == "href":
                 self.content.append("(" + value + ")")
+            if name == "alt":
+                self.content.append("A picture of a(n) " + value)
             
 
     def handle_endtag(self, tag):
@@ -446,12 +527,25 @@ class MyHTMLParser(HTMLParser):
             self.content.append(34)
         if tag == "ins":
             self.content.append(30)
+        if tag == "img":
+            self.content.append(36)
+        if tag == "table":
+            self.content.append(40)
+        if tag == "tr":
+            self.content.append(41)
+        if tag == "td" or tag == "th":
+            self.content.append(42)
+        if tag == "caption":
+            self.content.append(44)
 
 
     def handle_data(self, data):
         if len(self.content) >=2:
             if self.content[-2] == 4:
                 data = "[" + data + "]"
+                self.content.append(data)
+                return
+            if self.content[-1] == 39:
                 self.content.append(data)
                 return
         

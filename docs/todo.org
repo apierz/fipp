@@ -8,14 +8,13 @@
 ** horizontal scrolling [2/2]
    - [X] controls & logic 
    - [X] scrolling indicators
-** CURRENT html parser [5/8]
+** CURRENT html parser [7/7]
    - [X] tables
    - [X] links
-   - [ ] code
-   - [ ] pre-formatted text
+   - [X] code
    - [X] underline
    - [X] strikeout
-   - [ ] inline quotation
+   - [X] inline quotation
    - [X] imgs & alt text
    
 * Dynamic List view controller

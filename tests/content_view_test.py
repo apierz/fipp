@@ -20,8 +20,8 @@ def main(stdscr):
 
     stdscr.clear(); stdscr.refresh()
 
-    if path.exists("./tests/index.html"):
-        f = open("./tests/index.html", "r")
+    if path.exists("./tests/dfarticle.html"):
+        f = open("./tests/dfarticle.html", "r")
         if f.mode == 'r':
             content = f.read()
             f.close()

@@ -60,7 +60,19 @@ class CCV_con():
         self.content_lines = 0
         self.table_holder = []
 
-        lines = curses.LINES if int(len(content))+1 <= curses.LINES else int(len(content))+1
+        f = open("raw_data.txt", "w")
+        f.write(str(len(content)))
+        f.write("\n")
+        f.write(str(len(content)/self.content_width + 1))
+        f.close()
+
+        if len(content)/self.content_width + 1 < curses.LINES:
+            lines = curses.LINES + 1
+        else:
+            lines = len(content)/self.content_width * 2
+
+
+        lines = int(lines)
         self.content_pad = curses.newpad(lines, self.padding_width )
 
         filler_string = self._get_filler_string_content()
@@ -374,69 +386,82 @@ class CCV_con():
         response_data = r.json()
         return response_data['id']
 
-# class cdlv_list_item():
-#     def __init__(self, content_string):
-#         self.content_string = content_string
-#         self.flags = [" ", " ", " ", " ", " "]
+class cdlv_list_item():
+    def __init__(self, content_string):
+        self.content_string = content_string
+        self.flags = [" ", " ", " ", " ", " "]
 
-#     def trun_string(self, string):
-#         if len(self.string) + 6 > curses.COLS -2:
-#             while len(self.string) + 6 > curses.COLS -2:
-#                 self.string = self.string[:-1]
-#         self.string+="…"
-#         return string
+    def trun_string(self, string):
+        if len(string) + 6 > curses.COLS -2:
+            while len(string) + 6 > curses.COLS -2:
+                string = string[:-1]
+            string+="…"
+        return string
 
-#     def fill_list_string(self, list_string = ""):
-#         y, x = self.content_pad.getmaxyx()
-#         for i in range(1, x):
-#             list_string+=" "
-#         return list_string
+    def fill_list_string(self, list_string = ""):
+        x = curses.COLS + 1
+        for i in range(1, x):
+            list_string+=" "
+        return list_string
 
-#     def get_list_string(self):
-#         flag_string = ""
-#         for flag in flags:
-#             flag_string+=flag[0]
-#         list_string = self.trun_string(flag_string + self.content_string)
-#         return self.fill_list_string(list_string)
+    def get_list_string(self):
+        flag_string = ""
+        for flag in self.flags:
+            flag_string+=flag[0]
+        list_string = self.trun_string(flag_string + self.content_string)
+        return self.fill_list_string(list_string)
         
 
-# class cdlv_con():
-#     #Curses Dynamic List View Controller
-#     def __init__(self, stdscr, list_items, bottom_string, top_string, width):
-#         self.stdscr = stdscr
-#         self.bottom_bar = CV_bar(bottom_string, "bottom")
-#         self.top_bar = CV_bar(top_string, "top")
-#         self.list_items = []
-#         for item in list_items:
-#             self.list_items.append(cdlv_list_item(item))
+class CDLV_con():
+    #Curses Dynamic List View Controller
+    def __init__(self, stdscr, list_items, bottom_string, top_string):
+        self.stdscr = stdscr
+        self.bottom_bar = CV_bar(bottom_string, "bottom")
+        self.top_bar = CV_bar(top_string, "top")
+        self.list_items = []
+        for item in list_items:
+            self.list_items.append(cdlv_list_item(item))
         
-#         self.v_scroll_pos = 0
-#         self.highlight_pos = 0
-#         self.width = curses.COLS
-#         self.padding_width = curses.COLS + 4
+        self.v_scroll_pos = 0
+        self.highlight_pos = 0
+        self.width = curses.COLS
+        self.padding_width = curses.COLS + 4
 
-#         lines = curses.LINES if int(len(self.feed_items))+1 <= curses.LINES else int(len(self.feed_items))+1
+        lines = curses.LINES if int(len(self.list_items))+1 <= curses.LINES else int(len(self.list_items))+1
         
-#         self.content_pad = curses.newpad(lines, self.padding_width)
+        self.content_pad = curses.newpad(lines, self.padding_width)
 
-#     def refresh_display(self):
-#         for count, item in enumerate(self.list_items):
+    def fill_list_string(self, list_string = ""):
+        x = curses.COLS + 1
+        for i in range(1, x):
+            list_string+=" "
+        return list_string
 
-#             text = item.get_list_string()
+    def refresh_display(self):
+        for count, item in enumerate(self.list_items):
+
+            text = item.get_list_string()
             
-#             if self.highlight_pos == count:
-#                 pad.addstr(x, 0, text, curses.color_pair(1))
-#             if self.highlight_pos != count:
-#                 pad.addstr(x, 0, text, curses.A_REVERSE)
+            if self.highlight_pos == count:
+                self.content_pad.addstr(count, 0, text, curses.color_pair(1))
+            if self.highlight_pos != count:
+                self.content_pad.addstr(count, 0, text, curses.A_REVERSE)
 
-#         for z in range(len(self.list_items) - 1, curses.LINES - 2):
-#             pad.addstr(z, 0, self.fill_list_string(), curses.A_REVERSE)
+        for z in range(len(self.list_items) - 1, curses.LINES - 2):
+            self.content_pad.addstr(z, 0, self.fill_list_string(), curses.A_REVERSE)
 
-#         self.content
+        self.content_pad.refresh(self.v_scroll_pos,0, 1,0, curses.LINES - 2, curses.COLS - 1)
+        self.top_bar.update_bar()
+        self.bottom_bar.update_bar()
 
-#     # def scrollup_list(self):
-
-#     # def scrolldown_list(self):
+    def scrolldown_list(self):
+        if self.highlight_pos + 1 != len(self.list_items):
+            self.highlight_pos+=1
+            if self.highlight_pos - self.v_scroll_pos == curses.LINES - 2:
+                self.v_scroll_pos+=1
+            self.refresh_display()
+            
+        
     
 # class cflv_con(cv_con):
     #Curses Fixed List View Controller

@@ -19,7 +19,6 @@ class CV_bar():
             filler_string+= " "
         return filler_string
 
-
     def update_bar(self):
         self.pad.move(0,0)
         self.pad.clrtoeol()
@@ -117,7 +116,6 @@ class CCV_con():
 
         self._parsed_list_content_handler(parsed_string)
         
-
     def _parsed_list_content_handler(self, plist):
         line = 0
         width = self.content_width
@@ -329,7 +327,6 @@ class CCV_con():
         
         return filler_string
 
-
     def _handle_table(self, count, line):
         x = 0
         y = 0
@@ -348,7 +345,6 @@ class CCV_con():
             if type(data) is str:
                 data_list.append(data)
         max_length = len(max(data_list,key=len)) + 3
-
                              
         for cell in table_slice:
             if cell == 41:
@@ -356,7 +352,6 @@ class CCV_con():
                 row = []
             if type(cell) is str:
                 row.append(cell)
-
 
         for row_data in rows:
             row_data_string = "|"
@@ -377,7 +372,6 @@ class CCV_con():
 
         return (table_row_count * 2) + 1
                 
-
 class cdlv_list_item():
     def __init__(self, content_string):
         self.content_string = content_string
@@ -476,6 +470,10 @@ class CDLV_con():
     def add_to_list(self, string):
         self.list_items.insert(0, cdlv_list_item(string))
         self._adjust_to_changes()
+
+    def append_to_list(self, string):
+        self.list_items.insert(len(self.list_items), cdlv_list_item(string))
+        self._adjust_to_changes()
         
     def insert_to_list(self, string, index):
         self.list_items.insert(index, cdlv_list_item(string))
@@ -483,6 +481,13 @@ class CDLV_con():
 
     def delete_from_list(self, index):
         del self.list_items[index]
+        self._adjust_to_changes()
+
+    def copy_from_list(self, index):
+        self.copied_item = self.list_items[index]
+
+    def paste(self, index):
+        self.list_items.insert(index, self.copied_item)
         self._adjust_to_changes()
 
     def _adjust_to_changes(self):

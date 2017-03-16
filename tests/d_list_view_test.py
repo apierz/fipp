@@ -100,13 +100,12 @@ def main(stdscr):
             dlvcon.insert_to_list("inserted list item", dlvcon.highlight_pos)
         elif c == curses.KEY_UP or c == ord('d'):
             dlvcon.delete_from_list(dlvcon.highlight_pos)
-            
-
-        # elif c == curses.KEY_RIGHT or c == ord('l'):
-        #     cvcon.scrollright()
-        # elif c == curses.KEY_LEFT or c == ord('h'):
-        #     cvcon.scrollleft()
-
+        elif c == curses.KEY_UP or c == ord('c'):
+            dlvcon.copy_from_list(dlvcon.highlight_pos)
+        elif c == curses.KEY_UP or c == ord('p'):
+            dlvcon.paste(dlvcon.highlight_pos)
+        elif c == curses.KEY_UP or c == ord('e'):
+            dlvcon.append_to_list("appended item")
         elif c == ord('q'):
             break  # Exit the while loop
 

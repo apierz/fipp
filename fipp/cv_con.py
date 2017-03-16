@@ -465,7 +465,7 @@ class CDLV_con():
             if self.highlight_pos != count:
                 self.content_pad.addstr(count, 0, text, curses.A_REVERSE)
 
-        for z in range(count + 1, self.content_lines):
+        for z in range(count + 1, self.content_lines * 2):
             self.content_pad.addstr(z, 0, self.fill_list_string(), curses.A_REVERSE)
 
         self.content_pad.refresh(self.v_scroll_pos,0, 1,0, curses.LINES - 2, curses.COLS - 1)
@@ -481,10 +481,14 @@ class CDLV_con():
         self.list_items.insert(index, cdlv_list_item(string))
         self._adjust_to_changes()
 
+    def delete_from_list(self, index):
+        del self.list_items[index]
+        self._adjust_to_changes()
+
     def _adjust_to_changes(self):
-         lines = curses.LINES if int(len(self.list_items))+1 < curses.LINES else int(len(self.list_items))+1
+        lines = curses.LINES if int(len(self.list_items))+1 < curses.LINES else int(len(self.list_items))+1
         self.content_lines = lines
-        self.content_pad.resize(lines, self.padding_width)
+        self.content_pad.resize(lines * 2, self.padding_width)
         self.resize_con()
         self.stdscr.refresh()
 

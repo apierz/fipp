@@ -89,7 +89,6 @@ def main(stdscr):
         if c == curses.KEY_RESIZE:
             stdscr.clear()
             dlvcon.resize_con(y, x)
-            
 
         if c == curses.KEY_DOWN or c == ord('j'):
             dlvcon.scrolldown_list()
@@ -98,7 +97,9 @@ def main(stdscr):
         elif c == curses.KEY_UP or c == ord('a'):
             dlvcon.add_to_list("another added list item")
         elif c == curses.KEY_UP or c == ord('i'):
-            dlvcon.insert_to_list("inserted list item", self.dlvcon.highlight_pos)
+            dlvcon.insert_to_list("inserted list item", dlvcon.highlight_pos)
+        elif c == curses.KEY_UP or c == ord('d'):
+            dlvcon.delete_from_list(dlvcon.highlight_pos)
             
 
         # elif c == curses.KEY_RIGHT or c == ord('l'):

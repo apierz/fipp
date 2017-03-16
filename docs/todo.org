@@ -4,6 +4,11 @@
 - [ ] start
 
 * content view controller
+** privatization:
+- [ ] privatize variables
+- [ ] create getter/setter functions
+
+
 ** scrolling bars
 ** horizontal scrolling [2/2]
    - [X] controls & logic 
@@ -18,8 +23,18 @@
    - [X] imgs & alt text
    
 * Dynamic List view controller
+** privatization:
+- [ ] privatize variables
+- [ ] create getter/setter functions
 
 * Static List view controller
+** privatization:
+- [ ] privatize variables
+- [ ] create getter/setter functions
+** dynamizism
+- [ ] add
+- [ ] insert
+- [ ] del
 
 * accounts
 ** add feedbin

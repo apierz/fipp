@@ -83,8 +83,8 @@ class CCV_con():
     def resize_con(self, y, x):
         self.width = x
         curses.resizeterm(y, x)
-        self.refresh_display
         self.stdscr.refresh()
+        self.refresh_display()
 
     def refresh_display(self):
         self.stdscr.clear()
@@ -242,6 +242,7 @@ class CCV_con():
 
         self.content_lines = line
         self.scroll_ind_check()
+        self.top_bar.update_bar()
         self.bottom_bar.update_bar()
 
     def scroll_ind_check(self):
@@ -376,15 +377,6 @@ class CCV_con():
 
         return (table_row_count * 2) + 1
                 
-        
-
-    def goo_shorten_url(self, url):
-        post_url = 'https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyCoMyPAgrC7LEzSMZV0Mr6JxRhp1JZ4yt4'
-        payload = {'longUrl': url}
-        headers = {'content-type': 'application/json'}
-        r = requests.post(post_url, data=json.dumps(payload), headers=headers)
-        response_data = r.json()
-        return response_data['id']
 
 class cdlv_list_item():
     def __init__(self, content_string):
@@ -392,8 +384,8 @@ class cdlv_list_item():
         self.flags = [" ", " ", " ", " ", " "]
 
     def trun_string(self, string):
-        if len(string) + 6 > curses.COLS -2:
-            while len(string) + 6 > curses.COLS -2:
+        if len(string) + 6 > curses.COLS:
+            while len(string) + 6 > curses.COLS:
                 string = string[:-1]
             string+="…"
         return string
@@ -408,7 +400,7 @@ class cdlv_list_item():
         flag_string = ""
         for flag in self.flags:
             flag_string+=flag[0]
-        list_string = self.trun_string(flag_string + self.content_string)
+        list_string = self.trun_string(flag_string + " " + self.content_string)
         return self.fill_list_string(list_string)
         
 
@@ -427,15 +419,41 @@ class CDLV_con():
         self.width = curses.COLS
         self.padding_width = curses.COLS + 4
 
-        lines = curses.LINES if int(len(self.list_items))+1 <= curses.LINES else int(len(self.list_items))+1
+        lines = curses.LINES if int(len(self.list_items))+1 < curses.LINES else int(len(self.list_items))+1
+
+        self.content_lines = lines
         
         self.content_pad = curses.newpad(lines, self.padding_width)
+
+    def scroll_ind_check(self):
+        if self.v_scroll_pos > 0:
+            self.top_bar.right_flags[0] = "↑"
+        if self.v_scroll_pos == 0:
+            self.top_bar.right_flags[0] = " "
+
+        con1 = self.v_scroll_pos < len(self.list_items) + 1 + curses.LINES -2
+        con2 = len(self.list_items)+1 > curses.LINES-2
+
+        if con1 and con2:
+            self.bottom_bar.right_flags[0] = "↓"
+
+        if self.v_scroll_pos == len(self.list_items) - curses.LINES + 2:
+            self.bottom_bar.right_flags[0] = " "
 
     def fill_list_string(self, list_string = ""):
         x = curses.COLS + 1
         for i in range(1, x):
             list_string+=" "
         return list_string
+
+    def resize_con(self):
+        y, x = self.stdscr.getmaxyx()
+        self.stdscr.clear()
+        self.width = x
+        curses.resizeterm(y, x)
+        self.content_lines = y
+        self.stdscr.refresh()
+        self.refresh_display()
 
     def refresh_display(self):
         for count, item in enumerate(self.list_items):
@@ -447,21 +465,43 @@ class CDLV_con():
             if self.highlight_pos != count:
                 self.content_pad.addstr(count, 0, text, curses.A_REVERSE)
 
-        for z in range(len(self.list_items) - 1, curses.LINES - 2):
+        for z in range(count + 1, self.content_lines):
             self.content_pad.addstr(z, 0, self.fill_list_string(), curses.A_REVERSE)
 
         self.content_pad.refresh(self.v_scroll_pos,0, 1,0, curses.LINES - 2, curses.COLS - 1)
+        self.scroll_ind_check()
         self.top_bar.update_bar()
         self.bottom_bar.update_bar()
 
+    def add_to_list(self, string):
+        self.list_items.insert(0, cdlv_list_item(string))
+        self._adjust_to_changes()
+        
+    def insert_to_list(self, string, index):
+        self.list_items.insert(index, cdlv_list_item(string))
+        self._adjust_to_changes()
+
+    def _adjust_to_changes(self):
+         lines = curses.LINES if int(len(self.list_items))+1 < curses.LINES else int(len(self.list_items))+1
+        self.content_lines = lines
+        self.content_pad.resize(lines, self.padding_width)
+        self.resize_con()
+        self.stdscr.refresh()
+
     def scrolldown_list(self):
-        if self.highlight_pos + 1 != len(self.list_items):
+        if self.highlight_pos + 1 < len(self.list_items):
             self.highlight_pos+=1
             if self.highlight_pos - self.v_scroll_pos == curses.LINES - 2:
                 self.v_scroll_pos+=1
             self.refresh_display()
             
-        
+    def scrollup_list(self):
+        if self.highlight_pos > 0:
+            if self.highlight_pos == self.v_scroll_pos:
+                self.v_scroll_pos-=1
+            self.highlight_pos-=1
+            self.refresh_display()
+
     
 # class cflv_con(cv_con):
     #Curses Fixed List View Controller

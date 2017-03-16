@@ -32,7 +32,7 @@
 - [ ] privatize variables
 - [ ] create getter/setter functions
 ** dynamizism
-- [ ] add
+- [X] add
 - [ ] insert
 - [ ] del
 

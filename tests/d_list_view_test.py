@@ -87,7 +87,6 @@ def main(stdscr):
     while True:
         c = stdscr.getch()
         if c == curses.KEY_RESIZE:
-            y, x = stdscr.getmaxyx()
             stdscr.clear()
             dlvcon.resize_con(y, x)
             
@@ -98,6 +97,10 @@ def main(stdscr):
             dlvcon.scrollup_list()
         elif c == curses.KEY_UP or c == ord('a'):
             dlvcon.add_to_list("another added list item")
+        elif c == curses.KEY_UP or c == ord('i'):
+            dlvcon.insert_to_list("inserted list item", self.dlvcon.highlight_pos)
+            
+
         # elif c == curses.KEY_RIGHT or c == ord('l'):
         #     cvcon.scrollright()
         # elif c == curses.KEY_LEFT or c == ord('h'):

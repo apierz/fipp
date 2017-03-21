@@ -12,9 +12,6 @@ curses.noecho()
 curses.cbreak()
 stdscr.keypad(True)
 curses.curs_set(0)
-curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)
-curses.init_pair(2, curses.COLOR_BLUE, curses.COLOR_WHITE)
-
 
 def main(stdscr):
 
@@ -40,7 +37,7 @@ def main(stdscr):
         if c == curses.KEY_RESIZE:
             y, x = stdscr.getmaxyx()
             stdscr.clear()
-            cvcon.resize_con(y, x)
+            cvcon.resize_con()
             
 
         if c == curses.KEY_DOWN or c == ord('j'):

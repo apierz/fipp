@@ -103,6 +103,13 @@ def main(stdscr):
             dlvcon.paste(dlvcon.highlight_pos)
         elif c == curses.KEY_UP or c == ord('e'):
             dlvcon.append_to_list("appended item")
+        elif c == ord('1'):
+            dlvcon.change_bar_color('top', 4, 5)
+            dlvcon.change_bar_color('bottom', 5, 1)
+        elif c == ord('2'):
+            dlvcon.change_content_color(2, 3)
+        elif c == ord('3'):
+            dlvcon.change_highlight_color(0, 2)
         elif c == ord('q'):
             break  # Exit the while loop
 

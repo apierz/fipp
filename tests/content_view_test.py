@@ -48,6 +48,11 @@ def main(stdscr):
             cvcon.scrollright()
         elif c == curses.KEY_LEFT or c == ord('h'):
             cvcon.scrollleft()
+        elif c == ord('c'):
+            cvcon.change_bar_color('top', 4, 5)
+            cvcon.change_bar_color('bottom', 5, 1)
+        elif c == ord('e'):
+            cvcon.change_content_color(2, 3)
 
         elif c == ord('q'):
             break  # Exit the while loop

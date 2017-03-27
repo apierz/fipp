@@ -5,40 +5,48 @@ import requests
 import json
 
 color_pair_number = 1
+version = '0.1'
 
 def create_color_pair(foreground, background):
+    #Create new color pairs for user customization of UI Elements
     global color_pair_number
     curses.init_pair(color_pair_number, foreground, background)
     holder = color_pair_number
     color_pair_number += 1
-    return curses.color_pair(holder)
+    return (curses.color_pair(holder), holder)
 
 class CV_bar():
-    def __init__(self, content_string, location, color_pair):
+    #A top and/or bottom bar for view controllers
+    def __init__(self, content_string, location, color_pair, color_pair_index):
         self.bar_content = content_string
-        self.pad = curses.newpad(1, curses.COLS + 2)
+        self.pad = curses.newpad(1, curses.COLS+2)
         self.left_flags = [" ", " "]
         self.right_flags = [" ", " "]
-        self.width = curses.COLS+1
         self.location = location
         self.trun_content()
         self.color_pair = color_pair
+        self.color_pair_index = color_pair_index
 
     def resize_bar(self):
-        self.width = curses.COLS+1
+        #Resize the bar's pad in response to changing term size
         self.pad.resize(1, curses.COLS+2)
 
-
-    def change_color(self, color_pair):
-        self.color_pair = color_pair
+    def change_color(self, foreground, background):
+        #Change the bar's color pair 
+        curses.init_pair(self.color_pair_index,
+                             foreground,
+                             background)
+        self.update_bar()
 
     def _get_filler_string_tb(self, str = ""):
+        #Create strings of " " to fill spaces
         filler_string = ""
-        while len(str) + len(filler_string) < curses.COLS - 1:
+        while len(str) + len(filler_string) < curses.COLS:
             filler_string += " "
         return filler_string
 
     def update_bar(self, content = ""):
+        #Redisplay the bar
         if content is not "":
             self.bar_content = content
         self.pad.move(0,0)
@@ -51,26 +59,27 @@ class CV_bar():
                      content + \
                      self._get_filler_string_tb(content + "      ") + " " + \
                      self.right_flags[0] + \
-                     self.right_flags[1] + "  "
+                     self.right_flags[1]
 
-        self.pad.addstr(0,0, bar_string, self.color_pair)
+        self.pad.addstr(0,0, bar_string,
+                            curses.color_pair(self.color_pair_index))
 
         self.width = curses.COLS
         if self.location == "top":
-            self.pad.refresh(0,0, 0,0, 0,self.width-2)
+            self.pad.refresh(0,0, 0,0, 0,curses.COLS-1)
         if self.location == "bottom":
             self.pad.refresh(0,0, curses.LINES-1,0,
-                                    curses.LINES-1,self.width-2)
+                                    curses.LINES-1,curses.COLS-1)
 
     def trun_content(self):
+        #Shorten the bar's content string, so it fits on the screen
         content = self.bar_content
-        if len(content) + 6 > curses.COLS - 2:
-            while len(content) + 6 > curses.COLS - 2:
+        if len(content) + 7 > curses.COLS:
+            while len(content) + 7 > curses.COLS:
                 content = content[:-1]
             return content + "…"
         else:
             return content
-
 
 class CCV_con():
     # Curses Content View Controller
@@ -81,16 +90,20 @@ class CCV_con():
                      bottom_bar_colors = [7,0],
                      content_colors = [0,7]):
 
-        self.bottom_bar_colors = create_color_pair(bottom_bar_colors[0],
-                                                       bottom_bar_colors[1])
-        self.bottom_bar = CV_bar(bottom_string, "bottom",self.bottom_bar_colors)
-
-        self.top_bar_colors = create_color_pair(top_bar_colors[0],
-                                                       top_bar_colors[1])
-        self.top_bar = CV_bar(top_string, "top",self.top_bar_colors)
-
-        self.content_colors = create_color_pair(content_colors[0],
-                                                    content_colors[1])
+        
+        color = create_color_pair(bottom_bar_colors[0], bottom_bar_colors[1])
+        self.bottom_bar_colors = color[0]
+        self.bottom_bar = CV_bar(bottom_string, "bottom",
+                                     self.bottom_bar_colors,
+                                     color[1])
+        color = create_color_pair(top_bar_colors[0],top_bar_colors[1])
+        self.top_bar_colors = color[0]
+        self.top_bar = CV_bar(top_string, "top",
+                                     self.top_bar_colors,
+                                     color[1])
+        color = create_color_pair(content_colors[0],content_colors[1])
+        self.content_colors = color[0]
+        self.content_colors_index = color[1]
         self.content = content
         self.v_scroll_position = 0
         self.h_scroll_position = 0
@@ -111,10 +124,12 @@ class CCV_con():
 
         filler_string = self._get_filler_string_content()
         for x in range (0,lines):
-            self.content_pad.addstr(x, 0, filler_string, self.content_colors)
-
+            self.content_pad.addstr(x, 0,
+                                        filler_string,
+                                        curses.color_pair(self.content_colors_index))
 
     def resize_con(self):
+        #Resize and redisplay the controller, in response to term resizing
         y, x = self.stdscr.getmaxyx()
         self.stdscr.clear()
         curses.resizeterm(y, x)
@@ -125,6 +140,7 @@ class CCV_con():
         self.refresh_display()
 
     def refresh_display(self):
+        #Redisaply the controller
         self.stdscr.clear()
         self.stdscr.refresh()
 
@@ -137,6 +153,7 @@ class CCV_con():
         self.content_pad.refresh(0,0, 1,0, curses.LINES - 2,curses.COLS - 1)
 
     def _string_content_handler(self):
+        #Deterimines if content string is plain text or html and parses it
         if "</html>" in self.content or "<html>" in self.content:
                 parser = MyHTMLParser()
                 parser.feed(self.content)
@@ -156,6 +173,7 @@ class CCV_con():
         self._parsed_list_content_handler(parsed_string)
 
     def _parsed_list_content_handler(self, plist):
+        #Takes the parsed list, 
         line = 0
         width = self.content_width
         gap = ""
@@ -230,8 +248,9 @@ class CCV_con():
                        len(gap) + \
                        len(text_line) + \
                        len(margin) > width:
-                        self.content_pad.addstr(line,0, text_line,
-                                                    self.content_colors)
+                        self.content_pad.addstr(line,0,
+                                                text_line,
+                                                curses.color_pair(self.content_colors_index))
                         text_line = margin
                         gap = ""
                         line+=1
@@ -245,8 +264,9 @@ class CCV_con():
                         if gap == "":
                             gap = " "
                 if piece == 1:
-                    self.content_pad.addstr(line,0, text_line,
-                                                self.content_colors)
+                    self.content_pad.addstr(line,0,
+                                            text_line,
+                                            curses.color_pair(self.content_colors_index))
                     text_line = margin
                     line += 2
                     gap = ""
@@ -259,8 +279,9 @@ class CCV_con():
                     if ordered_list == False:
                         text_line += "* "
                 if piece == 7:
-                    self.content_pad.addstr(line,0, text_line,
-                                                self.content_colors)
+                    self.content_pad.addstr(line,0,
+                                            text_line,
+                                            curses.color_pair(self.content_colors_index))
                     text_line = margin
                     gap = ""
                     line += 1
@@ -268,7 +289,7 @@ class CCV_con():
                     text_line += "**"
                 if piece in (13,15,17,19,25,27):
                     self.content_pad.addstr(line,0, text_line,
-                                                self.content_colors)
+                                            curses.color_pair(self.content_colors_index))
                     gap = ""
                     text_line = margin
                     line += 2
@@ -285,8 +306,9 @@ class CCV_con():
                     line += 1
                     gap = ""
                 if piece == 66:
-                    self.content_pad.addstr(line,0, text_line,
-                                                self.content_colors)
+                    self.content_pad.addstr(line,0,
+                                            text_line,
+                                            curses.color_pair(self.content_colors_index))
                     gap = ""
                     text_line = margin
                     line += 1
@@ -297,6 +319,8 @@ class CCV_con():
         self.bottom_bar.update_bar()
 
     def scroll_ind_check(self):
+            #Updates the scroll indicators on the top and bottom bar"
+            
             con1 = self.v_scroll_position <\
                    self.content_lines + curses.LINES - 2
             con2 = self.content_lines > curses.LINES-2
@@ -329,30 +353,31 @@ class CCV_con():
                 self.bottom_bar.right_flags[1] = " "
 
     def scrollup(self):
+        #scrolls the display up
         if self.v_scroll_position > 0:
             self.v_scroll_position -= 1
             self.content_pad.refresh(self.v_scroll_position,
                                          self.h_scroll_position,
                                          1,0,
                                          curses.LINES -2, curses.COLS - 1)
-
             self.scroll_ind_check()
             self.top_bar.update_bar()
             self.bottom_bar.update_bar()
 
     def scrolldown(self):
+        #scrolls the display down
         if self.v_scroll_position < self.content_lines - curses.LINES+2:
             self.v_scroll_position += 1
             self.content_pad.refresh(self.v_scroll_position,
                                          self.h_scroll_position,
                                          1, 0,
                                          curses.LINES -2, curses.COLS - 1)
-
             self.scroll_ind_check()
             self.top_bar.update_bar()
             self.bottom_bar.update_bar()
 
     def scrollright(self):
+        #scrolls the display right
         if self.h_scroll_position < self.content_width - curses.COLS:
             self.h_scroll_position += 1
             self.content_pad.refresh(self.v_scroll_position,
@@ -366,18 +391,31 @@ class CCV_con():
 
 
     def scrollleft(self):
+        #scrolls the display left
         if self.h_scroll_position != 0:
             self.h_scroll_position -= 1
             self.content_pad.refresh(self.v_scroll_position,
                                          self.h_scroll_position,
                                          1,0,
                                          curses.LINES -2, curses.COLS - 1)
-
             self.scroll_ind_check()
             self.top_bar.update_bar()
             self.bottom_bar.update_bar()
 
+    def change_bar_color(self, position, foreground, background):
+        #Change the controller's bar colors
+        if position is 'top':
+            self.top_bar.change_color(foreground, background)
+        if position is 'bottom':
+            self.bottom_bar.change_color(foreground, background)
+
+    def change_content_color(self, foreground, background):
+        #Change the content area's colors
+        curses.init_pair(self.content_colors_index, foreground, background)
+        self.refresh_display()
+
     def _get_filler_string_content(self, str=""):
+        #Get a string of spaces for padding and empty lines
         filler_string = ""
         y, x = self.content_pad.getmaxyx()
         for i in range(1, x):
@@ -386,6 +424,7 @@ class CCV_con():
         return filler_string
 
     def _handle_table(self, count, line):
+        #Format and load html tables from content
         x = 0
         y = 0
         table_row_count = 0
@@ -431,11 +470,13 @@ class CCV_con():
         return (table_row_count * 2) + 1
 
 class cdlv_list_item():
+    #An individual list item for dynamic lists
     def __init__(self, content_string):
         self.content_string = content_string
         self.flags = [" ", " ", " ", " ", " "]
 
     def trun_string(self, string):
+        #Shorten the string so it fits on the screen 
         if len(string) + 6 > curses.COLS:
             while len(string) + 6 > curses.COLS:
                 string = string[:-1]
@@ -443,12 +484,14 @@ class cdlv_list_item():
         return string
 
     def fill_list_string(self, list_string = ""):
+        #Fill the rest of a list string that is too short
         x = curses.COLS + 1
         for i in range(1, x):
             list_string += " "
         return list_string
 
     def get_list_string(self):
+        #Provide a formatted list string with flags
         flag_string = ""
         for flag in self.flags:
             flag_string += flag[0]
@@ -464,20 +507,22 @@ class CDLV_con():
                      bottom_bar_colors = [7,0],
                      content_colors = [0,7],
                      highlight_colors = [7,3]):
-
-        self.bottom_bar_colors = create_color_pair(bottom_bar_colors[0],
-                                                       bottom_bar_colors[1])
-        self.bottom_bar = CV_bar(bottom_string, "bottom",self.bottom_bar_colors)
-
-        self.top_bar_colors = create_color_pair(top_bar_colors[0],
-                                                       top_bar_colors[1])
-        self.top_bar = CV_bar(top_string, "top",self.top_bar_colors)
-
-        self.content_colors = create_color_pair(content_colors[0],
-                                                    content_colors[1])
-
-        self.highlight_colors = create_color_pair(highlight_colors[0],
-                                                      highlight_colors[1])
+        color = create_color_pair(bottom_bar_colors[0], bottom_bar_colors[1])
+        self.bottom_bar_colors = color[0]
+        self.bottom_bar = CV_bar(bottom_string, "bottom",
+                                     self.bottom_bar_colors,
+                                     color[1])
+        color = create_color_pair(top_bar_colors[0],top_bar_colors[1])
+        self.top_bar_colors = color[0]
+        self.top_bar = CV_bar(top_string, "top",
+                                     self.top_bar_colors,
+                                     color[1])
+        color = create_color_pair(content_colors[0],content_colors[1])
+        self.content_colors = color[0]
+        self.content_colors_index = color[1]
+        color = create_color_pair(highlight_colors[0],highlight_colors[1])
+        self.highlight_colors = color[0]
+        self.highlight_colors_index = color[1]
 
         self.stdscr = stdscr
         self.list_items = []
@@ -493,10 +538,10 @@ class CDLV_con():
                 curses.LINES else int(len(self.list_items)) +1
 
         self.content_lines = lines
-
         self.content_pad = curses.newpad(lines, self.padding_width)
 
     def scroll_ind_check(self):
+        #Checks to see if bars should show scrolling indicators
         if self.v_scroll_pos > 0:
             self.top_bar.right_flags[0] = "↑"
         if self.v_scroll_pos == 0:
@@ -512,12 +557,14 @@ class CDLV_con():
             self.bottom_bar.right_flags[0] = " "
 
     def fill_list_string(self, list_string = ""):
+        #Provides strings of " "  to fill strings and lines
         x = curses.COLS+1
         for i in range(1, x):
             list_string+=" "
         return list_string
 
     def resize_con(self):
+        #resize display in response to changing term size
         y, x = self.stdscr.getmaxyx()
         self.stdscr.clear()
         curses.resizeterm(y, x)
@@ -534,14 +581,19 @@ class CDLV_con():
 
 
     def refresh_display(self):
+        #reloads the entire controller
         for count, item in enumerate(self.list_items):
 
             text = item.get_list_string()
 
             if self.highlight_pos == count:
-                self.content_pad.addstr(count, 0, text, self.highlight_colors)
+                self.content_pad.addstr(count, 0,
+                                        text,
+                                        curses.color_pair(self.highlight_colors_index))
             if self.highlight_pos != count:
-                self.content_pad.addstr(count, 0, text, self.content_colors)
+                self.content_pad.addstr(count, 0,
+                                        text,
+                                        curses.color_pair(self.content_colors_index))
 
         f = open("raw_data.txt", "w")
         for z in range(count + 1, curses.LINES + count):
@@ -558,29 +610,36 @@ class CDLV_con():
         self.bottom_bar.update_bar()
 
     def add_to_list(self, string):
+        #Add an item to the list
         self.list_items.insert(0, cdlv_list_item(string))
         self._adjust_to_changes()
 
     def append_to_list(self, string):
+        #Add an item to the end of the list
         self.list_items.insert(len(self.list_items), cdlv_list_item(string))
         self._adjust_to_changes()
 
     def insert_to_list(self, string, index):
+        #Insert an item at the specified index
         self.list_items.insert(index, cdlv_list_item(string))
         self._adjust_to_changes()
 
     def delete_from_list(self, index):
+        #delete an item from the list
         del self.list_items[index]
         self._adjust_to_changes()
 
     def copy_from_list(self, index):
+        #copy an item from the list
         self.copied_item = self.list_items[index]
 
     def paste(self, index):
+        #paste the copied item
         self.list_items.insert(index, self.copied_item)
         self._adjust_to_changes()
 
     def _adjust_to_changes(self):
+        #updates display to deal with changes to the list contents
         lines = curses.LINES if int(len(self.list_items)) +1 <\
                 curses.LINES else int(len(self.list_items)) +1
         self.content_lines = lines
@@ -589,6 +648,7 @@ class CDLV_con():
         self.stdscr.refresh()
 
     def scrolldown_list(self):
+        #move the highlighter and screen down, if necessarry
         if self.highlight_pos + 1 < len(self.list_items):
             self.highlight_pos += 1
             if self.highlight_pos - self.v_scroll_pos == curses.LINES - 2:
@@ -596,37 +656,70 @@ class CDLV_con():
             self.refresh_display()
 
     def scrollup_list(self):
+        #move the highlighter and screen up, if necessarry
         if self.highlight_pos > 0:
             if self.highlight_pos == self.v_scroll_pos:
                 self.v_scroll_pos -= 1
             self.highlight_pos -=1
             self.refresh_display()
 
-class fixed_list_item():
-    def __init__(self, item_list):
-        self.item_heading = item_list[0]
-        self.default = item_list[1]
-        self.selected_index = 1
-        self.selected_item = self.default
-        self.options = [None]
+    def change_bar_color(self, position, foreground, background):
+        #Change the controller's bar colors
+        if position is 'top':
+            self.top_bar.change_color(foreground, background)
+        if position is 'bottom':
+            self.bottom_bar.change_color(foreground, background)
 
-        for x in range(1, len(item_list)):
-            self.options.append(item_list[x])
+    def change_content_color(self, foreground, background):
+        #Change the content area's colors
+        curses.init_pair(self.content_colors_index, foreground, background)
+        self.refresh_display()
+
+    def change_highlight_color(self, foreground, background):
+        #Change the highlight area's colors
+        curses.init_pair(self.highlight_colors_index, foreground, background)
+        self.refresh_display()
+
+
+class fixed_list_item():
+    #Item for displaying on fixed list controllers
+    def __init__(self, item_list):
+        if type(item_list) is str:
+            self.item_heading = item_list
+            self.has_options = False
+
+        else:
+            self.item_heading = item_list[0]
+            self.default = item_list[1]
+            self.selected_index = 1
+            self.selected_item = self.default
+            self.options = [""]
+            self.has_options = True
+
+            for x in range(1, len(item_list)):
+                self.options.append(item_list[x])
 
     def get_list_string(self):
-        half = int((curses.COLS + 1)/2)
+        if self.has_options is False:
+            heading = self.item_heading
+            while len(heading) < curses.COLS + 1:
+                heading = " " + heading + " "
+            return heading
+            
+        if self.has_options is True:
+            half = int((curses.COLS + 1)/2)
 
-        selection_string = self.selected_item
-        if selection_string == "":
-            selection_string = "<not set>"
-        while len(selection_string) < half -1:
-            selection_string += " "
+            selection_string = self.selected_item
+            if selection_string == "":
+                selection_string = "<not set>"
+            while len(selection_string) < half -1:
+                selection_string += " "
 
-        heading_string = self.item_heading
-        while len(heading_string) < half-1:
-            heading_string = " " + heading_string
+            heading_string = self.item_heading
+            while len(heading_string) < half-1:
+                heading_string = " " + heading_string
 
-        return heading_string + " : " + selection_string
+            return heading_string + " : " + selection_string
 
 class CFLV_con():
     #Curses Fixed List View Controller
@@ -639,21 +732,25 @@ class CFLV_con():
                      highlight_colors = [7,3],
                      text_entry_colors = [7,6]):
 
-        self.bottom_bar_colors = create_color_pair(bottom_bar_colors[0],
-                                                       bottom_bar_colors[1])
-        self.bottom_bar = CV_bar(bottom_string, "bottom",self.bottom_bar_colors)
-
-        self.top_bar_colors = create_color_pair(top_bar_colors[0],
-                                                       top_bar_colors[1])
-        self.top_bar = CV_bar(top_string, "top",self.top_bar_colors)
-
-        self.content_colors = create_color_pair(content_colors[0],
-                                                    content_colors[1])
-
-        self.highlight_colors = create_color_pair(highlight_colors[0],
-                                                      highlight_colors[1])
-        self.text_entry_colors = create_color_pair(text_entry_colors[0],
-                                                       text_entry_colors[1])
+        color = create_color_pair(bottom_bar_colors[0], bottom_bar_colors[1])
+        self.bottom_bar_colors = color[0]
+        self.bottom_bar = CV_bar(bottom_string, "bottom",
+                                     self.bottom_bar_colors,
+                                     color[1])
+        color = create_color_pair(top_bar_colors[0],top_bar_colors[1])
+        self.top_bar_colors = color[0]
+        self.top_bar = CV_bar(top_string, "top",
+                                     self.top_bar_colors,
+                                     color[1])
+        color = create_color_pair(content_colors[0],content_colors[1])
+        self.content_colors = color[0]
+        self.content_colors_index = color[1]
+        color = create_color_pair(highlight_colors[0],highlight_colors[1])
+        self.highlight_colors = color[0]
+        self.highlight_colors_index = color[1]
+        color = create_color_pair(text_entry_colors[0],text_entry_colors[1])
+        self.text_entry_colors = color[0]
+        self.text_entry_colors_index = color[1]
 
         self.stdscr = stdscr
 
@@ -677,6 +774,7 @@ class CFLV_con():
         self.content_pad = curses.newpad(lines, self.padding_width)
 
     def scroll_ind_check(self):
+        #Displays scroll indicators, if necessary
         if self.v_scroll_pos > 0:
             self.top_bar.right_flags[0] = "↑"
         if self.v_scroll_pos == 0:
@@ -692,6 +790,7 @@ class CFLV_con():
             self.bottom_bar.right_flags[0] = " "
 
     def resize_con(self):
+        #Adjust display in response to a resize event
         y, x = self.stdscr.getmaxyx()
         self.stdscr.clear()
         curses.resizeterm(y, x)
@@ -706,6 +805,7 @@ class CFLV_con():
         self.refresh_display()
 
     def refresh_display(self):
+        #Update entire display
         filler_pad = curses.newpad(2, curses.COLS + 2)
         filler_pad.addstr(0, 0, self.fill_list_string(), self.content_colors)
         filler_pad.addstr(1, 0, self.fill_list_string(), self.content_colors)
@@ -715,13 +815,18 @@ class CFLV_con():
             text = item.get_list_string()
 
             if self.highlight_pos == count:
-                self.content_pad.addstr(count, 0, text, self.highlight_colors)
+                self.content_pad.addstr(count, 0,
+                                        text,
+                                        curses.color_pair(self.highlight_colors_index))
             if self.highlight_pos != count:
-                self.content_pad.addstr(count, 0, text, self.content_colors)
+                self.content_pad.addstr(count, 0,
+                                        text,
+                                        curses.color_pair(self.content_colors_index))
 
             for z in range(count + 3, self.content_lines):
-                self.content_pad.addstr(z, 0, self.fill_list_string(),
-                                            self.content_colors)
+                self.content_pad.addstr(z, 0,
+                                        self.fill_list_string(),
+                                        curses.color_pair(self.content_colors_index))
 
         self.content_pad.refresh(self.v_scroll_pos,0,
                                      3,0,
@@ -731,6 +836,7 @@ class CFLV_con():
         self.bottom_bar.update_bar()
 
     def scrolldown_list(self):
+        #Move highlighted position down and screen, if necessary
         if self.highlight_pos + 1 < len(self.list_items):
             self.highlight_pos += 1
             if self.highlight_pos - self.v_scroll_pos+2 == curses.LINES - 2:
@@ -738,6 +844,7 @@ class CFLV_con():
             self.refresh_display()
 
     def scrollup_list(self):
+        #Move highlighted position down and screen, if necessary
         if self.highlight_pos > 0:
             if self.highlight_pos == self.v_scroll_pos:
                 self.v_scroll_pos -= 1
@@ -745,56 +852,85 @@ class CFLV_con():
             self.refresh_display()
 
     def fill_list_string(self, list_string = ""):
+        #Provides strings of " " to fill lines
         x = curses.COLS + 1
         for i in range(1, x):
             list_string += " "
         return list_string
 
     def cycle_options(self, index):
+        #cycle through the options in increasing order, then start over
 
         item = self.list_items[index]
+        if item.has_options is True:
+            con1 = item.selected_index
+            con2 = len(item.options) - 1
+            if con1 == con2:
+                self.list_items[index].selected_index = 1
+            else:
+                self.list_items[index].selected_index += 1
 
-        con1 = item.selected_index
-        con2 = len(item.options)-1
-        if con1 == con2:
-            self.list_items[index].selected_index = 1
-        else:
-            self.list_items[index].selected_index += 1
+            self.list_items[index].selected_item = \
+                self.list_items[index].options[self.list_items[index].selected_index]
+            self.refresh_display()
 
-        self.list_items[index].selected_item = \
-          self.list_items[index].options[self.list_items[index].selected_index]
-        self.refresh_display()
-
-        return self.list_items[index].selected_index
+            return self.list_items[index].selected_index
 
     def reset_to_default(self, index):
-        self.list_items[index].selected_item = self.list_items[index].options[1]
-        self.list_items[index].selected_index = 1
-        self.refresh_display()
+        #reset the option to the default: the option at index 1
+        if self.list_items[index].has_options is True:
+            self.list_items[index].selected_item = self.list_items[index].options[1]
+            self.list_items[index].selected_index = 1
+            self.refresh_display()
 
     def custom_option(self, index):
-        old_string = self.top_bar.bar_content
-        self.top_bar.bar_content = "Press Enter to confirm."
-        self.top_bar.update_bar()
+        #opens a text entry box to provide custom options, stored at index 0
 
-        win = curses.newwin(1, 0, 1, 0)
-        win.attron(self.text_entry_colors)
-        tb = curses.textpad.Textbox(win,insert_mode=True)
-        curses.curs_set(1)
-        tb.stripspaces = 1
-        text = tb.edit()
-        self.stdscr.refresh()
-        win.attroff(self.text_entry_colors)
+        if self.list_items[index].has_options is True:
+            old_string = self.top_bar.bar_content
+            self.top_bar.bar_content = "Press Enter to confirm."
+            self.top_bar.update_bar()
 
-        self.top_bar.bar_content = old_string
-        self.top_bar.update_bar()
-        curses.curs_set(0)
-        curses.flash()
+            win = curses.newwin(1, 0, 1, 0)
+            win.attron(curses.color_pair(self.text_entry_colors_index))
+            tb = curses.textpad.Textbox(win,insert_mode=True)
+            curses.curs_set(1)
+            tb.stripspaces = 1
+            text = tb.edit()
+            self.stdscr.refresh()
+            win.attroff(curses.color_pair(self.text_entry_colors_index))
 
-        self.list_items[index].options[0] = text
-        self.list_items[index].selected_item = text
-        self.list_items[index].selected_index = 0
+            self.top_bar.bar_content = old_string
+            self.top_bar.update_bar()
+            curses.curs_set(0)
+            curses.flash()
 
+            self.list_items[index].options[0] = text
+            self.list_items[index].selected_item = text
+            self.list_items[index].selected_index = 0
+
+            self.refresh_display()
+
+    def change_bar_color(self, position, foreground, background):
+        #Change the controller's bar colors
+        if position is 'top':
+            self.top_bar.change_color(foreground, background)
+        if position is 'bottom':
+            self.bottom_bar.change_color(foreground, background)
+
+    def change_content_color(self, foreground, background):
+        #Change the content area's colors
+        curses.init_pair(self.content_colors_index, foreground, background)
+        self.refresh_display()
+
+    def change_highlight_color(self, foreground, background):
+        #Change the highlight area's colors
+        curses.init_pair(self.highlight_colors_index, foreground, background)
+        self.refresh_display()
+
+    def change_text_entry_color(self, foreground, background):
+        #Change the highlight area's colors
+        curses.init_pair(self.text_entry_colors_index, foreground, background)
         self.refresh_display()
 
 class MyHTMLParser(HTMLParser):
@@ -975,7 +1111,6 @@ class MyHTMLParser(HTMLParser):
             self.content.append(44)
         if tag == "q":
             self.content.append(46)
-
 
     def handle_data(self, data):
         if len(self.content) >= 2:

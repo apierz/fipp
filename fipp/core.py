@@ -15,17 +15,19 @@ curses.curs_set(0)
 
 # def add_account():
 
-def display_item_body(pos,content, content_view):
+def display_item_body(pos, content, content_view, unread_items):
     content_view.update_content(content)
+
+    content_view.bottom_bar.update_bar(unread_items[pos].feed_title + " - " + \
+                                          unread_items[pos].title)
+
+    
     content_view.refresh_display()
     
     while True:
         c = stdscr.getch()
         if c == curses.KEY_RESIZE:
-            y, x = stdscr.getmaxyx()
-            stdscr.clear()
             content_view.resize_con()
-            
 
         if c == curses.KEY_DOWN or c == ord('j'):
             content_view.scrolldown()
@@ -35,6 +37,24 @@ def display_item_body(pos,content, content_view):
             content_view.scrollright()
         elif c == curses.KEY_LEFT or c == ord('h'):
             content_view.scrollleft()
+        elif c == curses.KEY_UP or c == ord('m'):
+            read = None
+            if unread_items[pos].read is True:
+                read = False
+                unread_items[pos].read = False
+            else:
+                read = True
+                unread_items[pos].read = True
+            uaccount.change_read_status(unread_items[pos].feed_item_id, read)
+        elif c == curses.KEY_UP or c == ord('s'):
+            starred = None
+            if unread_items[pos].starred is True:
+                starred = False
+                unread_items[pos].starred = False
+            else:
+                starred = True
+                unread_items[pos].starred = True
+            uaccount.change_star_status(unread_items[pos].feed_item_id, starred)
         elif c == ord('n'):
             return 1
         elif c == ord('p'):
@@ -44,6 +64,8 @@ def display_item_body(pos,content, content_view):
             break  # Exit the while loop
     return -999
 
+uaccount = Account()
+uaccount = uaccount.verify_user_info()
 
 def main(stdscr):
 
@@ -64,16 +86,9 @@ def main(stdscr):
     for item in unread_items:
         item_headers.append(item.get_header_string())
 
-    item_list_view = CDLV_con(stdscr, item_headers, "A helpful bottom message", "q:Quit  m:Mark (un)read  s:(un)Star  r:Refresh  l:List feeds")
-    content_view = CCV_con(stdscr, "", 80, "A helpful bottom message also", "Commands will go here")
-
-    for pos, item in enumerate(unread_items):
-        if item.read is False:
-            item_list_view.list_items[pos].flags[1] = "•"
-        if item.starred is True:
-            item_list_view.list_items[pos].flags[3] = "*"
-    
-    item_list_view.refresh_display()
+    item_list_view = CDLV_con(stdscr, item_headers, "q:Quit  m:Mark (un)read  s:(un)Star  r:Refresh  l:List feeds",
+                                  "A helpful bottom message")
+    content_view = CCV_con(stdscr, "", 80, "q:Back  m:Mark (un)read  s:(un)Star  n:Next  p:Prev", "Title, Info, Etc")
 
     while True:
         for pos, item in enumerate(unread_items):
@@ -86,6 +101,10 @@ def main(stdscr):
                 item_list_view.list_items[pos].flags[3] = "*"
             if item.starred is False:
                 item_list_view.list_items[pos].flags[3] = " "
+
+        item_list_view.bottom_bar.bar_content = str(len(unread_items)) + \
+                                                     " unread items in " + \
+                                                     uaccount.service + " account"
 
         item_list_view.refresh_display()
         
@@ -127,7 +146,7 @@ def main(stdscr):
             read_pos = item_list_view.highlight_pos
             read_pos += display_item_body(read_pos,
                                           unread_items[item_list_view.highlight_pos].body,
-                                          content_view) 
+                                          content_view, unread_items) 
 
             while read_pos >= 0:
                 if read_pos == len(unread_items):
@@ -136,7 +155,7 @@ def main(stdscr):
                     stdscr.clear(); stdscr.refresh()
                     read_pos += display_item_body(read_pos,
                                                   unread_items[read_pos].body,
-                                                  content_view)
+                                                  content_view, unread_items)
             read_pos = 1
 
 

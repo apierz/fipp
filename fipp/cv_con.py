@@ -20,8 +20,8 @@ class CV_bar():
     def __init__(self, content_string, location, color_pair, color_pair_index):
         self.bar_content = content_string
         self.pad = curses.newpad(1, curses.COLS+2)
-        self.left_flags = [" ", " "]
-        self.right_flags = [" ", " "]
+        self.left_flags = [" ", " ", " ", " "]
+        self.right_flags = [" ", " ", " ", " "]
         self.location = location
         self.trun_content()
         self.color_pair = color_pair
@@ -54,12 +54,16 @@ class CV_bar():
         self.pad.move(0,0)
         content = self.trun_content()
 
-        bar_string = self.left_flags[0] + \
-                     self.left_flags[1] + " " + \
-                     content + \
-                     self._get_filler_string_tb(content + "      ") + " " + \
-                     self.right_flags[0] + \
-                     self.right_flags[1]
+        bar_string = ""
+
+        for flag in self.left_flags:
+            bar_string += flag
+
+        bar_string+=" " + content + \
+        self._get_filler_string_tb(content + "          ") + " "
+
+        for flag in self.right_flags:
+            bar_string += flag
 
         self.pad.addstr(0,0, bar_string,
                             curses.color_pair(self.color_pair_index))
@@ -74,8 +78,8 @@ class CV_bar():
     def trun_content(self):
         #Shorten the bar's content string, so it fits on the screen
         content = self.bar_content
-        if len(content) + 7 > curses.COLS:
-            while len(content) + 7 > curses.COLS:
+        if len(content) + 11 > curses.COLS:
+            while len(content) + 11 > curses.COLS:
                 content = content[:-1]
             return content + "…"
         else:
@@ -516,8 +520,8 @@ class cdlv_list_item():
 class CDLV_con():
     #Curses Dynamic List View Controller
     def __init__(self, stdscr, list_items,
-                     bottom_string,
                      top_string,
+                     bottom_string,
                      top_bar_colors = [7,0],
                      bottom_bar_colors = [7,0],
                      content_colors = [0,7],
@@ -744,8 +748,8 @@ class fixed_list_item():
 class CFLV_con():
     #Curses Fixed List View Controller
     def __init__(self, stdscr, list_items,
-                     bottom_string,
                      top_string,
+                     bottom_string,
                      top_bar_colors = [7,0],
                      bottom_bar_colors = [7,0],
                      content_colors = [0,7],

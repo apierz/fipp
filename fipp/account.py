@@ -8,7 +8,7 @@ from datetime import date, time, timedelta
 import time
 import urllib.request
 import json
-import readline
+# import readline
 from pathlib import Path
 
 class Feed():
@@ -134,11 +134,14 @@ class Account():
         my_file = Path("user_info")
         if my_file.is_file():
             f = open("user_info", "r")
-            service = f.readline().rstrip()
+            # service = f.readline().rstrip()
+            service = "Feed Wrangler"
 
             if service == "Feed Wrangler":
-                username = f.readline().rstrip()
-                key = f.readline().rstrip()
+                # username = f.readline().rstrip()
+                # key = f.readline().rstrip()
+                username = "andy@andypierz.com"
+                key = "eb5324a134d198bd7910db38c517b04f"
                 user_account = Account(username = username, key = key, service = service)
                 f.close()
                 return user_account

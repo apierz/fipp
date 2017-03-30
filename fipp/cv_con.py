@@ -128,6 +128,22 @@ class CCV_con():
                                         filler_string,
                                         curses.color_pair(self.content_colors_index))
 
+    def update_content(self, content):
+        self.content = content
+        if len(content)/self.content_width + 1 < curses.LINES:
+            lines = curses.LINES + 1
+        else:
+            lines = len(content)/self.content_width * 2
+
+        lines = int(lines)
+        self.content_pad.resize(lines, self.padding_width )
+
+        filler_string = self._get_filler_string_content()
+        for x in range (0,lines):
+            self.content_pad.addstr(x, 0,
+                                        filler_string,
+                                        curses.color_pair(self.content_colors_index))
+
     def resize_con(self):
         #Resize and redisplay the controller, in response to term resizing
         y, x = self.stdscr.getmaxyx()
@@ -154,7 +170,7 @@ class CCV_con():
 
     def _string_content_handler(self):
         #Deterimines if content string is plain text or html and parses it
-        if "</html>" in self.content or "<html>" in self.content:
+        if "</html>" in self.content or "<html>" in self.content or "<p>" in self.content:
                 parser = MyHTMLParser()
                 parser.feed(self.content)
                 parsed_string = parser.content
@@ -233,12 +249,12 @@ class CCV_con():
                             break
                         else:
                             del plist[z]
-                if isinstance(piece, str):
+                if type(piece) is str:
                     if len(piece) > width:
                         while len(first_half) + \
                               len(text_line) + \
                               len(gap) + \
-                              len(margin) < width:
+                              len(margin)*2 < width:
                             first_half+=piece[:1]
                             piece = piece[1:]
                         plist.insert(count+1, piece)
@@ -303,7 +319,6 @@ class CCV_con():
                 if piece == 34:
                     text_line += "~~"
                 if piece == 36:
-                    line += 1
                     gap = ""
                 if piece == 66:
                     self.content_pad.addstr(line,0,
@@ -540,6 +555,11 @@ class CDLV_con():
         self.content_lines = lines
         self.content_pad = curses.newpad(lines, self.padding_width)
 
+    def update_list_items(self, item_list):
+        self.list_items = []
+        for item in item_list:
+            self.list_items.append(cdlv_list_item(item))
+
     def scroll_ind_check(self):
         #Checks to see if bars should show scrolling indicators
         if self.v_scroll_pos > 0:
@@ -595,13 +615,13 @@ class CDLV_con():
                                         text,
                                         curses.color_pair(self.content_colors_index))
 
-        f = open("raw_data.txt", "w")
         for z in range(count + 1, curses.LINES + count):
-            f.write(str(z) + "\n")
-            self.content_pad.addstr(z, 0, self.fill_list_string(),
-                                        self.content_colors)
+            try:
+                self.content_pad.addstr(z, 0, self.fill_list_string(),
+                                            self.content_colors)
+            except:
+                x=y=0
 
-        f.close()
         self.content_pad.refresh(self.v_scroll_pos,0,
                                      1,0,
                                      curses.LINES - 2, curses.COLS - 1 )

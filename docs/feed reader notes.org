@@ -11,3 +11,42 @@ https://feedwrangler.net/api/v2/users/authorize?email=andy@andypierz.com&passwor
 bitly key: 072b5502dfc64e095adbdff63796efeb56517083
 
 google-url: AIzaSyCoMyPAgrC7LEzSMZV0Mr6JxRhp1JZ4yt4
+
+Your user id is 0692aafb-618d-4a47-94b8-2903b5af228b
+Your access token: 
+AzHbcrf3xvyo_ydwq89r9hjsaQiNbY2bO71JZszHWA8cdVHcoo3lnmo9CDJVoQ82EGMO_tQMT0fcc6GhYGZWwLPA4f30xJjGaULuxaO4wQL4TELVT06l23vstWoxhq8XPGUedxSzTkkhzzMyW3SZForxt8m-DRiUU0IGTLUnGFM5x6fLAn4pVbXUx_ZJAj5uA91n5WxhWViv2LQMk2cRA2ZB8vSw:feedlydev
+ (expires on 2017-04-27)
+
+
+* REST apis
+
+Rest is noun based, instead of verb based
+
+Resource: person
+Service: GET contact info
+Representation: name, address, phone (JSON, XML)
+
+** Uniform Interface
+Standard set of 
+*** HTTP verbs (GET, PUT, POST, DELETE)
+*** URIs, 
+*** HTTP responses (Status, body)
+
+** Stateless
+server contains noclient state
+any session state is held on client state
+client needs to understand that it wont always have a direct connection
+
+** Cacheable
+
+responses are cacheable
+if not noted = implicit
+explicit
+negotiated
+
+** Layered System
+clients can't assume direct connection
+maybe talking to a cache or other intermediary
+
+** Code on Demand
+

@@ -26,5 +26,8 @@
 * Static List view controller
 
 * accounts
+** CURRENT add feedwrangler 
+- [ ] error handling
+- [ ] test
 ** add feedbin
 ** add feedly

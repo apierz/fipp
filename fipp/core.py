@@ -13,7 +13,45 @@ curses.cbreak()
 stdscr.keypad(True)
 curses.curs_set(0)
 
-# def add_account():
+def add_account():
+
+    account_view_info = [["Service", "Feed Wrangler", "Feed Bin"], ["Username", " "], ["Password", " "], "Verify Account"]
+
+    account_view = CFLV_con(stdscr, account_view_info,
+                                "q:Back  c:Cycle Options  r:Reset to default  e:Edit",
+                                "Verify Account Info")
+    stdscr.clear()
+    stdscr.refresh()
+    account_view.refresh_display()
+
+    while True:
+        c = stdscr.getch()
+        if c == curses.KEY_RESIZE:
+            stdscr.clear()
+            account_view.resize_con()
+
+        if c == curses.KEY_DOWN or c == ord('j'):
+            account_view.scrolldown_list()
+        elif c == curses.KEY_UP or c == ord('k'):
+            account_view.scrollup_list()
+        elif c == curses.KEY_UP or c == ord('c'):
+            account_view.cycle_options(account_view.highlight_pos)
+        elif c == curses.KEY_UP or c == ord('e'):
+            account_view.custom_option(account_view.highlight_pos)
+        elif c == curses.KEY_UP or c == ord('r'):
+            account_view.reset_to_default(account_view.highlight_pos)
+        elif c == curses.KEY_ENTER or c == 10 or c == 13:
+            if account_view.highlight_pos == 3:
+                new_account = Account(username = account_view.list_items[1].selected_item.rstrip(),
+                                    password = account_view.list_items[2].selected_item.rstrip(),
+                                    service = account_view.list_items[0].selected_item)
+                return new_account
+
+        elif c == ord('q'):
+            return False
+            break  # Exit the while loop
+
+     
 
 def display_item_body(pos, content, content_view, unread_items):
     content_view.update_content(content)
@@ -76,8 +114,8 @@ def main(stdscr):
     uaccount = Account()
     uaccount = uaccount.verify_user_info()
     
-    if uaccount is False:
-        add_account()
+    while uaccount is False:
+        uaccount = add_account()
 
             
     unread_items = uaccount.get_unread_items()

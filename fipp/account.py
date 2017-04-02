@@ -8,8 +8,8 @@ from datetime import date, time, timedelta
 import time
 import urllib.request
 import json
-# import readline
 from pathlib import Path
+import pickle
 
 class Feed():
     def __init__(self, title, feed_id, feed_url, site_url):
@@ -29,7 +29,7 @@ class FeedItem():
         self.title = title
         self.starred = starred
         self.read = read
-        self.body = body
+        self.body = "<url>" + self.url + "</url></p>" + body
         self.author = author
         self.feed_id = feed_id
         self.feed_title = feed_title
@@ -96,8 +96,10 @@ class Account():
                 key = data['error']
             else:
                 self.key = data['access_token']
-                self.write_user_info(self.service, self.username, self.key)
+                self.save_user_info()
             self.load_feeds()
+
+            self.save_user_info()
 
 
     def get_unread_items(self):
@@ -123,28 +125,26 @@ class Account():
             return unread_feed_items
 
 
-    def write_user_info(self, service, username, auther):
-        f = open("user_info", "w+")
-        f.write(service + "\n" +
-                username + "\n" +
-                auther)
-        f.close()
+    def save_user_info(self):
+        outFile = open("user_info", "wb")
+        pickle.dump(self, outFile)
+        outFile.close()
+
 
     def verify_user_info(self):
         my_file = Path("user_info")
         if my_file.is_file():
-            f = open("user_info", "r")
-            # service = f.readline().rstrip()
-            service = "Feed Wrangler"
+            f = open("user_info", "rb")
+            # try:
+            data = f.read()
+            uaccount = pickle.loads(data)
+            # except:
+                # return Account("Error", "In", "verify")
+            f.close()
+            service = uaccount.service
 
             if service == "Feed Wrangler":
-                # username = f.readline().rstrip()
-                # key = f.readline().rstrip()
-                username = "andy@andypierz.com"
-                key = "eb5324a134d198bd7910db38c517b04f"
-                user_account = Account(username = username, key = key, service = service)
-                f.close()
-                return user_account
+                return uaccount
             else:
                 f.close()
                 return False

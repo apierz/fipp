@@ -110,6 +110,8 @@ def main(stdscr):
     stdscr.clear(); stdscr.refresh()
 
     read_pos = None
+    read_mod = False
+    star_mod = False
 
     uaccount = Account()
     uaccount = uaccount.verify_user_info()
@@ -140,6 +142,17 @@ def main(stdscr):
             if item.starred is False:
                 item_list_view.list_items[pos].flags[3] = " "
 
+        if read_mod is True:
+            item_list_view.bottom_bar.left_flags[1] = "•"
+        if read_mod is False:
+            item_list_view.bottom_bar.left_flags[1] = " "
+
+        if star_mod is True:
+            item_list_view.bottom_bar.left_flags[2] = "*"
+        if star_mod is False:
+            item_list_view.bottom_bar.left_flags[2] = " "
+
+
         item_list_view.bottom_bar.bar_content = str(len(unread_items)) + \
                                                      " unread items in " + \
                                                      uaccount.service + " account"
@@ -155,7 +168,7 @@ def main(stdscr):
             item_list_view.scrolldown_list()
         elif c == curses.KEY_UP or c == ord('k'):
             item_list_view.scrollup_list()
-        elif c == curses.KEY_UP or c == ord('m'):
+        elif c == ord('m'):
             read = None
             if unread_items[item_list_view.highlight_pos].read is True:
                 read = False
@@ -163,8 +176,9 @@ def main(stdscr):
             else:
                 read = True
                 unread_items[item_list_view.highlight_pos].read = True
+            read_mod = True
             uaccount.change_read_status(unread_items[item_list_view.highlight_pos].feed_item_id, read)
-        elif c == curses.KEY_UP or c == ord('s'):
+        elif c == ord('s'):
             starred = None
             if unread_items[item_list_view.highlight_pos].starred is True:
                 starred = False
@@ -172,8 +186,9 @@ def main(stdscr):
             else:
                 starred = True
                 unread_items[item_list_view.highlight_pos].starred = True
+            star_mod = True
             uaccount.change_star_status(unread_items[item_list_view.highlight_pos].feed_item_id, starred)
-        elif c == curses.KEY_UP or c == ord('r'):
+        elif c == ord('r'):
             unread_items = uaccount.get_unread_items()
             item_headers = []
             for item in unread_items:

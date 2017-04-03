@@ -1,10 +1,23 @@
 #+title:  fipp todo list
 
-*   core
-- [ ] start
+* CURRENT core
+- [X] start
+- [ ] settings/menu
+- [ ] logout
+** Unread Item View [0/2]
+   - [ ] show change in status indicators in bottom bar
+** Feed List View [0/2]
+   - [ ] show current feeds + unread count
+   - [ ] -> list of 25 most recent articles from that feed
+** Item Content View [0/2]
+   - [ ] show starred status in bottom bar
+   - [ ] show read status in bottom bar
+
 
 * content view controller
-** scrolling bars
+- [ ] loading indicators
+- [ ] dynamic content
+- [ ] scrolling bars
 ** DONE horizontal scrolling [2/2]
    - [X] controls & logic 
    - [X] scrolling indicators
@@ -16,7 +29,6 @@
    - [X] strikeout
    - [X] inline quotation
    - [X] imgs & alt text
-   
 * Dynamic List view controller
 ** DONE dynamizism [3/3]
 - [X] add
@@ -24,10 +36,13 @@
 - [X] del
 
 * Static List view controller
-
-* accounts
+- [ ] fix resize during text entry event
+  
+* account
+** user data protection
+   - [ ] look into encrypting file, or encrypting pickle
+https://pypi.python.org/pypi/EncryptedPickle/0.1.4
 ** CURRENT add feedwrangler 
 - [ ] error handling
-- [ ] test
 ** add feedbin
 ** add feedly

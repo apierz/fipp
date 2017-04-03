@@ -174,7 +174,7 @@ class CCV_con():
 
     def _string_content_handler(self):
         #Deterimines if content string is plain text or html and parses it
-        if "</html>" in self.content or "<html>" in self.content or "<p>" in self.content:
+        if "</html>" in self.content or "<html>" in self.content or "</p>" in self.content:
                 f = open("raw_data.txt", "w")
                 f.write(self.content)
                 f.close()
@@ -283,7 +283,9 @@ class CCV_con():
                                                 text_line,
                                                 curses.color_pair(self.content_colors_index))
                        except:
-                            x=y=0
+                           self.content_pad.addstr(line,0,
+                                                "???",
+                                                curses.color_pair(self.content_colors_index))
                        text_line = margin
                        gap = ""
                        line+=1
@@ -320,7 +322,7 @@ class CCV_con():
                                             curses.color_pair(self.content_colors_index))
                     text_line = margin
                     gap = ""
-                    line += 1
+                    line += 2
                 if piece == 11:
                     text_line += "**"
                 if piece in (13,15,17,19,25,27):

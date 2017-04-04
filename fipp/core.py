@@ -176,9 +176,17 @@ def display_feed_items(items, account):
             item_list_view.bottom_bar.left_flags[2] = "-"
 
 
-        item_list_view.bottom_bar.bar_content = str(unread_count) + \
-                                                    " unread items from " + \
-                                                    "[" + items[0].feed_title + "]"
+        titles = []
+        for item in items:
+            titles.append(item.feed_title)
+            
+        if len(titles) > 1 and len(set(titles)) > 1:
+            bottom_string = str(len(items)) + " starred items from [" + uaccount.service + "]"
+        else:
+            bottom_string = str(unread_count) + " unread items from [" + items[0].feed_title + "]"
+            itemprev = item.feed_title
+
+        item_list_view.bottom_bar.bar_content = bottom_string
 
         item_list_view.refresh_display()
         c = stdscr.getch()
@@ -217,7 +225,7 @@ def display_feed_items(items, account):
             read_pos = item_list_view.highlight_pos
             read_pos += display_item_body(read_pos,
                                           items[item_list_view.highlight_pos].body,
-                                          content_view, items) 
+                                          content_view, items)
 
             while read_pos >= 0:
                 if read_pos == len(items):
@@ -232,9 +240,6 @@ def display_feed_items(items, account):
 
         elif c == ord('q'):
             break  # Exit the while loop
-
-
-                                 
 
 def main(stdscr):
 
@@ -251,14 +256,13 @@ def main(stdscr):
     while uaccount is False:
         uaccount = add_account()
 
-            
     unread_items = uaccount.get_unread_items()
 
     item_headers = []
     for item in unread_items:
         item_headers.append(item.get_header_string())
 
-    item_list_view = CDLV_con(stdscr, item_headers, "q:Quit  m:Mark (un)read  s:(un)Star  r:Refresh  l:List feeds",
+    item_list_view = CDLV_con(stdscr, item_headers, "q:Quit  m:Mark (un)read  s:(un)Star  r:Refresh  l:List feeds  *:Starred items",
                                   "A helpful bottom message")
     content_view = CCV_con(stdscr, "", 80, "q:Back  m:Mark (un)read  s:(un)Star  n:Next  p:Prev", "Title, Info, Etc")
 
@@ -290,7 +294,7 @@ def main(stdscr):
                                                      uaccount.service + " account"
 
         item_list_view.refresh_display()
-        
+
         c = stdscr.getch()
         if c == curses.KEY_RESIZE:
             stdscr.clear()
@@ -328,12 +332,14 @@ def main(stdscr):
             item_list_view.update_list_items(item_headers)
         elif c == ord('l'):
             display_feed_list(uaccount)
+        elif c == ord('*'):
+            display_feed_items(uaccount.get_starred_items(), uaccount)
         elif c == curses.KEY_ENTER or c == 10 or c == 13:
             stdscr.clear(); stdscr.refresh()
             read_pos = item_list_view.highlight_pos
             read_pos += display_item_body(read_pos,
                                           unread_items[item_list_view.highlight_pos].body,
-                                          content_view, unread_items) 
+                                          content_view, unread_items)
 
             while read_pos >= 0:
                 if read_pos == len(unread_items):

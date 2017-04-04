@@ -9,15 +9,16 @@
 - [ ] settings/menu
 - [ ] logout
 - [ ] add/remove feeds
-** Unread Item View [1/1]
+** Unread Item View [2/2]
    - [X] show change in status indicators in bottom bar
-   - [ ] show all starred items
+   - [X] show all starred items
 ** Feed List View [2/2]
    - [X] show current feeds + unread count
    - [X] -> list of 25 most recent articles from that feed
 ** Item Content View [2/2]
    - [X] show starred status in bottom bar
    - [X] show read status in bottom bar
+   - [ ] add date of publication to bottom bar
 
 
 * content view controller [/]

@@ -26,7 +26,7 @@ class FeedItem():
         self.published_at = published_at
         self.created_at = created_at
         self.url = url
-        self.title = title
+        self.title = title.rstrip()
         self.starred = starred
         self.read = read
         self.body = "<url>" + self.url + "</url></p>" + body
@@ -101,6 +101,40 @@ class Account():
 
             self.save_user_info()
 
+    def process_data(self, data):
+        if self.service == "Feed Wrangler":
+            if data['error']:
+                pass
+            else:
+                feed_items = []
+                for item in data['feed_items']:
+                    if '\n' in item['title']:
+                        title = ""
+                        titles = item['title'].splitlines()
+                        for piece in titles:
+                            title += piece + " "
+                        item['title'] = title
+                    feed_items.append(FeedItem(item['feed_item_id'],
+                                                item['published_at'],
+                                                item['created_at'],
+                                                item['url'],
+                                                item['title'],
+                                                item['starred'],
+                                                item['read'],
+                                                item['body'],
+                                                item['author'],
+                                                item['feed_id'],
+                                                item['feed_name'],
+                                                self.service))
+                return feed_items
+
+    def get_starred_items(self):
+        if self.service == "Feed Wrangler":
+            response = urllib.request.urlopen(FW_API_URL + "feed_items/list?starred=true" + \
+                                                  "&access_token=" + self.key).read()
+            data = json.loads(response.decode())
+            return self.process_data(data)
+
     def get_most_recent(self, feed):
         if self.service == "Feed Wrangler":
             response = urllib.request.urlopen(FW_API_URL + "feed_items/list?feed_id=" + \
@@ -108,47 +142,14 @@ class Account():
                                                   "&limit=25" + \
                                                   "&access_token=" + self.key).read()
             data = json.loads(response.decode())
-            if data['error']:
-                pass
-            else:
-                unread_feed_items = []
-
-                for item in data['feed_items']:
-                    unread_feed_items.append(FeedItem(item['feed_item_id'],
-                                                                item['published_at'],
-                                                                item['created_at'],
-                                                                item['url'],
-                                                                item['title'],
-                                                                item['starred'],
-                                                                item['read'],
-                                                                item['body'],
-                                                                item['author'],
-                                                                item['feed_id'],
-                                                                item['feed_name'],
-                                                                self.service))
-            return unread_feed_items
+            return self.process_data(data)
 
     def get_unread_items(self):
-            if self.service == "Feed Wrangler":
-                response = urllib.request.urlopen(FW_API_URL + "/feed_items/list?access_token=" +
+        if self.service == "Feed Wrangler":
+            response = urllib.request.urlopen(FW_API_URL + "/feed_items/list?access_token=" +
                                                     self.key + "&read=false").read()
             data = json.loads(response.decode())
-            unread_feed_items = []
-
-            for item in data['feed_items']:
-                unread_feed_items.append(FeedItem(item['feed_item_id'],
-                                                            item['published_at'],
-                                                            item['created_at'],
-                                                            item['url'],
-                                                            item['title'],
-                                                            item['starred'],
-                                                            item['read'],
-                                                            item['body'],
-                                                            item['author'],
-                                                            item['feed_id'],
-                                                            item['feed_name'],
-                                                            self.service))
-            return unread_feed_items
+            return self.process_data(data)
 
 
     def save_user_info(self):

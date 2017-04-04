@@ -118,10 +118,10 @@ class CCV_con():
         self.content_lines = 0
         self.table_holder = []
 
-        if len(content)/self.content_width + 1 < curses.LINES:
-            lines = curses.LINES + 1
-        else:
-            lines = (len(content)/self.content_width) * 2
+        # if len(content)/self.content_width + 1 < curses.LINES:
+            # lines = curses.LINES + 1
+        # else:
+        lines = ((len(content)/self.content_width) * 4) + curses.LINES
 
         lines = int(lines)+1
         self.content_pad = curses.newpad(lines, self.padding_width )
@@ -134,12 +134,10 @@ class CCV_con():
 
     def update_content(self, content):
         self.content = content
-        if len(content)/self.content_width + 1 < curses.LINES:
-            lines = curses.LINES + 1
-        else:
-            lines = len(content)/self.content_width * 2
+        lines = ((len(content)/self.content_width) * 4) + curses.LINES
 
-        lines = int(lines)
+        lines = int(lines)+1
+
         self.content_pad.resize(lines, self.padding_width )
 
         filler_string = self._get_filler_string_content()
@@ -283,9 +281,7 @@ class CCV_con():
                                                 text_line,
                                                 curses.color_pair(self.content_colors_index))
                        except:
-                           self.content_pad.addstr(line,0,
-                                                "???",
-                                                curses.color_pair(self.content_colors_index))
+                           pass
                        text_line = margin
                        gap = ""
                        line+=1
@@ -304,7 +300,7 @@ class CCV_con():
                                             text_line,
                                             curses.color_pair(self.content_colors_index))
                     except:
-                        x=y=0
+                        pass
                     text_line = margin
                     line += 2
                     gap = ""

@@ -101,6 +101,32 @@ class Account():
 
             self.save_user_info()
 
+    def get_most_recent(self, feed):
+        if self.service == "Feed Wrangler":
+            response = urllib.request.urlopen(FW_API_URL + "feed_items/list?feed_id=" + \
+                                                  str(feed.feed_id) + \
+                                                  "&limit=25" + \
+                                                  "&access_token=" + self.key).read()
+            data = json.loads(response.decode())
+            if data['error']:
+                pass
+            else:
+                unread_feed_items = []
+
+                for item in data['feed_items']:
+                    unread_feed_items.append(FeedItem(item['feed_item_id'],
+                                                                item['published_at'],
+                                                                item['created_at'],
+                                                                item['url'],
+                                                                item['title'],
+                                                                item['starred'],
+                                                                item['read'],
+                                                                item['body'],
+                                                                item['author'],
+                                                                item['feed_id'],
+                                                                item['feed_name'],
+                                                                self.service))
+            return unread_feed_items
 
     def get_unread_items(self):
             if self.service == "Feed Wrangler":
@@ -164,7 +190,8 @@ class Account():
                         feed_sub = Feed(feed['title'],
                                             feed['feed_id'],
                                             feed['feed_url'],
-                                            feed['site_url'])
+                                            feed['site_url'],
+                                            self)
                         self.feeds.append(feed_sub)
 
     def change_star_status(self, item_id, status):

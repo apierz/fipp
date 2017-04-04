@@ -7,11 +7,11 @@ Fipp is designed to work with online RSS feed tracking services, rather than man
 Fipp is currently in alpha so it is quite buggy and also stores your password in essesntially plaintext. 
 
 * Screenshots
-![Main Screen](https://github.com/apierz/fipp/blob/master/screenshots/mainscreen.png?raw=true)
+[[Main Screen][https://github.com/apierz/fipp/blob/master/screenshots/mainscreen.png?raw=true]]
 
-![Feed List](https://github.com/apierz/fipp/blob/master/screenshots/feedlist.png?raw=true)
+[[Feed List][https://github.com/apierz/fipp/blob/master/screenshots/feedlist.png?raw=true]]
 
-![Content View](https://github.com/apierz/fipp/blob/master/screenshots/contentview.png?raw=true)
+[[Content View][https://github.com/apierz/fipp/blob/master/screenshots/contentview.png?raw=true]]
 
 
 * Todo

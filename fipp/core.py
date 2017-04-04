@@ -59,8 +59,26 @@ def display_item_body(pos, content, content_view, unread_items):
     content_view.bottom_bar.update_bar(unread_items[pos].feed_title + " - " + \
                                           unread_items[pos].title)
     content_view.refresh_display()
+
+    uaccount = Account()
+    uaccount = uaccount.verify_user_info()
+
+    uaccount.change_read_status(unread_items[pos].feed_item_id, True)
+    unread_items[pos].read = True
     
     while True:
+        if unread_items[pos].read is False:
+            content_view.bottom_bar.left_flags[2] = "•"
+        if unread_items[pos].read is True:
+            content_view.bottom_bar.left_flags[2] = "-"
+
+        if unread_items[pos].starred is True:
+            content_view.bottom_bar.left_flags[3] = "*"
+        if unread_items[pos].starred is False:
+            content_view.bottom_bar.left_flags[3] = "-"
+
+        content_view.bottom_bar.update_bar()
+    
         c = stdscr.getch()
         if c == curses.KEY_RESIZE:
             content_view.resize_con()
@@ -166,14 +184,14 @@ def display_feed_items(items, account):
                 item_list_view.list_items[pos].flags[3] = " "
 
         if read_mod is True:
-            item_list_view.bottom_bar.left_flags[1] = "•"
+            item_list_view.bottom_bar.left_flags[2] = "•"
         if read_mod is False:
-            item_list_view.bottom_bar.left_flags[1] = "-"
+            item_list_view.bottom_bar.left_flags[2] = "-"
 
         if star_mod is True:
-            item_list_view.bottom_bar.left_flags[2] = "*"
+            item_list_view.bottom_bar.left_flags[3] = "*"
         if star_mod is False:
-            item_list_view.bottom_bar.left_flags[2] = "-"
+            item_list_view.bottom_bar.left_flags[3] = "-"
 
 
         titles = []
@@ -279,14 +297,14 @@ def main(stdscr):
                 item_list_view.list_items[pos].flags[3] = " "
 
         if read_mod is True:
-            item_list_view.bottom_bar.left_flags[1] = "•"
+            item_list_view.bottom_bar.left_flags[2] = "•"
         if read_mod is False:
-            item_list_view.bottom_bar.left_flags[1] = "-"
+            item_list_view.bottom_bar.left_flags[2] = "-"
 
         if star_mod is True:
-            item_list_view.bottom_bar.left_flags[2] = "*"
+            item_list_view.bottom_bar.left_flags[3] = "*"
         if star_mod is False:
-            item_list_view.bottom_bar.left_flags[2] = "-"
+            item_list_view.bottom_bar.left_flags[3] = "-"
 
 
         item_list_view.bottom_bar.bar_content = str(len(unread_items)) + \

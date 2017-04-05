@@ -539,7 +539,8 @@ class CDLV_con():
                      top_bar_colors = [7,0],
                      bottom_bar_colors = [7,0],
                      content_colors = [0,7],
-                     highlight_colors = [7,3]):
+                     highlight_colors = [7,3],
+                     text_entry_colors = [0,3]):
         color = create_color_pair(bottom_bar_colors[0], bottom_bar_colors[1])
         self.bottom_bar_colors = color[0]
         self.bottom_bar = CV_bar(bottom_string, "bottom",
@@ -556,6 +557,9 @@ class CDLV_con():
         color = create_color_pair(highlight_colors[0],highlight_colors[1])
         self.highlight_colors = color[0]
         self.highlight_colors_index = color[1]
+        color = create_color_pair(text_entry_colors[0],text_entry_colors[1])
+        self.text_entry_colors = color[0]
+        self.text_entry_colors_index = color[1]
 
         self.stdscr = stdscr
         self.list_items = []
@@ -620,6 +624,7 @@ class CDLV_con():
 
     def refresh_display(self):
         #reloads the entire controller
+        count = 0
         for count, item in enumerate(self.list_items):
 
             text = item.get_list_string()
@@ -676,6 +681,30 @@ class CDLV_con():
         self.list_items.insert(index, self.copied_item)
         self._adjust_to_changes()
 
+    def load_text_popup(self):
+        #opens a text entry box and returns with the user enters
+        old_string = self.top_bar.bar_content
+        self.top_bar.bar_content = "Press Enter to confirm."
+        self.top_bar.update_bar()
+
+        win = curses.newwin(1, 0, 1, 0)
+        win.attron(curses.color_pair(self.text_entry_colors_index))
+        tb = curses.textpad.Textbox(win,insert_mode=True)
+        curses.curs_set(1)
+        tb.stripspaces = 1
+        text = tb.edit()
+        self.stdscr.refresh()
+        win.attroff(curses.color_pair(self.text_entry_colors_index))
+
+        self.top_bar.bar_content = old_string
+        self.top_bar.update_bar()
+        curses.curs_set(0)
+        curses.flash()
+
+        self.refresh_display()
+        return text
+
+
     def _adjust_to_changes(self):
         #updates display to deal with changes to the list contents
         lines = curses.LINES if int(len(self.list_items)) +1 <\
@@ -718,6 +747,11 @@ class CDLV_con():
         curses.init_pair(self.highlight_colors_index, foreground, background)
         self.refresh_display()
 
+    def change_text_entry_color(self, foreground, background):
+        #Change the highlight area's colors
+        curses.init_pair(self.text_entry_colors_index, foreground, background)
+        self.refresh_display()
+
 
 class fixed_list_item():
     #Item for displaying on fixed list controllers
@@ -743,7 +777,7 @@ class fixed_list_item():
             while len(heading) < curses.COLS + 1:
                 heading = " " + heading + " "
             return heading
-            
+
         if self.has_options is True:
             half = int((curses.COLS + 1)/2)
 
@@ -913,6 +947,12 @@ class CFLV_con():
             self.refresh_display()
 
             return self.list_items[index].selected_index
+
+    def set_to_index(self, item_index, option_index):
+        item = self.list_items[item_index]
+        if item.has_options is True:
+            self.list_items[item_index].selected_item = self.list_items[index].options[option_index]
+            self.list_items[item_index].selected_index = option_index
 
     def reset_to_default(self, index):
         #reset the option to the default: the option at index 1

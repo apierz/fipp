@@ -2,13 +2,13 @@
 
 * README
 - [X] start
-- [ ] screenshots
+- [X] screenshots
 
 * CURRENT core
 - [X] start
 - [ ] settings/menu
 - [ ] logout
-- [ ] add/remove feeds
+- [X] add/remove feeds
 ** Unread Item View [2/2]
    - [X] show change in status indicators in bottom bar
    - [X] show all starred items

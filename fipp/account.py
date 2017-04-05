@@ -12,11 +12,12 @@ from pathlib import Path
 import pickle
 
 class Feed():
-    def __init__(self, title, feed_id, feed_url, site_url):
+    def __init__(self, title, feed_id, feed_url, site_url, account):
         self.title = title
         self.feed_id = feed_id
         self.feed_url = feed_url
         self.site_url = site_url
+        self.account = account
 
 class FeedItem():
     def __init__(self, feed_item_id, published_at, created_at,
@@ -80,7 +81,20 @@ class Account():
     global FW_CLIENT_KEY
     FW_CLIENT_KEY = "77037deda1050eff59d9619d4d2f4fd4"
 
-    def __init__(self, username = "", password = "", service = "", key = ""):
+    def __init__(self, username = "", password = "", service = "", key = "",
+                     bf_col = 7, bb_col = 0, mf_col = 0, mb_col = 7,
+                     hf_col = 7, hb_col = 3, tf_col = 7, tb_col = 4):
+        
+        self.bf_col = bf_col
+        self.bb_col = bb_col
+        self.mf_col = mf_col
+        self.mb_col = mb_col
+        self.hf_col = hf_col
+        self.hb_col = hb_col
+        self.tf_col = tf_col
+        self.tb_col = tb_col
+        self.color_changed = False
+        
         self.service = service
         self.username = username
         self.password = password
@@ -100,6 +114,31 @@ class Account():
             self.load_feeds()
 
             self.save_user_info()
+
+    def add_feed(self, url):
+        if self.service == "Feed Wrangler":
+            response = urllib.request.urlopen(FW_API_URL + \
+                        "/subscriptions/add_feed_and_wait?access_token=" + \
+                        self.key + "&choose_first=true" +\
+                        "&feed_url="+url).read()
+            data = json.loads(response.decode())
+            if data['error']:
+                return data['error']
+            else:
+                return True
+
+    def remove_feed(self, feed_id):
+        if self.service == "Feed Wrangler":
+            response = urllib.request.urlopen(FW_API_URL + \
+                        "subscriptions/remove_feed?access_token=" + \
+                        self.key + \
+                        "&feed_id=" + feed_id).read()
+            data = json.loads(response.decode())
+            if data['error']:
+                return data['error']
+            else:
+                return True
+
 
     def process_data(self, data):
         if self.service == "Feed Wrangler":
@@ -151,12 +190,10 @@ class Account():
             data = json.loads(response.decode())
             return self.process_data(data)
 
-
     def save_user_info(self):
         outFile = open("user_info", "wb")
         pickle.dump(self, outFile)
         outFile.close()
-
 
     def verify_user_info(self):
         my_file = Path("user_info")
@@ -165,6 +202,7 @@ class Account():
             # try:
             data = f.read()
             uaccount = pickle.loads(data)
+            uaccount.load_feeds()
             # except:
                 # return Account("Error", "In", "verify")
             f.close()
@@ -194,6 +232,8 @@ class Account():
                                             feed['site_url'],
                                             self)
                         self.feeds.append(feed_sub)
+
+                    self.save_user_info()
 
     def change_star_status(self, item_id, status):
        if self.service == "Feed Wrangler":

@@ -99,8 +99,8 @@ def num_to_color(num):
 def display_settings(account):
     settings_menu = [["Bar Foreground", "White", "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
                      ["Bar Background", "Black", "White", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
-                     ["Main Foreground", "White", "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
-                     ["Main Background", "Black", "White", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
+                     ["Main Foreground", "Black", "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
+                     ["Main Background", "White", "White", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
                      ["Highlight Foreground", "White", "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
                      ["HighLight Background", "Yellow", "White", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
                      ["Textbox Foreground", "White", "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
@@ -113,15 +113,21 @@ def display_settings(account):
                                  [account.mf_col, account.mb_col], [account.hf_col, account.hb_col])
 
     settings_view.list_items[0].selected_item = num_to_color(account.bf_col)
+    settings_view.list_items[0].selected_index = settings_view.list_items[0].options.index(num_to_color(account.bf_col))
     settings_view.list_items[1].selected_item = num_to_color(account.bb_col)
+    settings_view.list_items[1].selected_index = settings_view.list_items[1].options.index(num_to_color(account.bb_col))
     settings_view.list_items[2].selected_item = num_to_color(account.mf_col)
+    settings_view.list_items[2].selected_index = settings_view.list_items[2].options.index(num_to_color(account.mf_col))
     settings_view.list_items[3].selected_item = num_to_color(account.mb_col)
+    settings_view.list_items[3].selected_index = settings_view.list_items[3].options.index(num_to_color(account.mb_col))
     settings_view.list_items[4].selected_item = num_to_color(account.hf_col)
+    settings_view.list_items[4].selected_index = settings_view.list_items[4].options.index(num_to_color(account.hf_col))
     settings_view.list_items[5].selected_item = num_to_color(account.hb_col)
+    settings_view.list_items[5].selected_index = settings_view.list_items[5].options.index(num_to_color(account.hb_col))
     settings_view.list_items[6].selected_item = num_to_color(account.tf_col)
+    settings_view.list_items[6].selected_index = settings_view.list_items[6].options.index(num_to_color(account.tf_col))
     settings_view.list_items[7].selected_item = num_to_color(account.tb_col)
-    
-
+    settings_view.list_items[7].selected_index = settings_view.list_items[7].options.index(num_to_color(account.tb_col))
     
     stdscr.clear()
     stdscr.refresh()
@@ -162,8 +168,26 @@ def display_settings(account):
                 
         elif c == curses.KEY_UP or c == ord('r'):
             settings_view.reset_to_default(settings_view.highlight_pos)
-            
+            account.color_changed = True
+            if settings_view.highlight_pos is 0:
+                account.bf_col = color_to_num(settings_view.list_items[0].selected_item)
+            if settings_view.highlight_pos is 1:
+                account.bb_col = color_to_num(settings_view.list_items[1].selected_item)
+            if settings_view.highlight_pos is 2:
+                account.mf_col = color_to_num(settings_view.list_items[2].selected_item)
+            if settings_view.highlight_pos is 3:
+                account.mb_col = color_to_num(settings_view.list_items[3].selected_item)
+            if settings_view.highlight_pos is 4:
+                account.hf_col = color_to_num(settings_view.list_items[4].selected_item)
+            if settings_view.highlight_pos is 5:
+                account.hb_col = color_to_num(settings_view.list_items[5].selected_item)
+            if settings_view.highlight_pos is 6:
+                account.tf_col = color_to_num(settings_view.list_items[6].selected_item)
+            if settings_view.highlight_pos is 6:
+                account.tb_col = color_to_num(settings_view.list_items[7].selected_item)
+
         elif c == ord('q'):
+            account.save_user_info()
             return False
             break  # Exit the while loop
     
@@ -173,20 +197,15 @@ def display_item_body(pos, content, unread_items, account):
                                   [account.bf_col, account.bb_col], [account.bf_col, account.bb_col],
                                   [account.mf_col, account.mb_col])
 
-    content_view.bottom_bar.update_bar(unread_items[pos].feed_title + " - " + \
+    content_view.bottom_bar.update_bar(unread_items[pos].get_date_time() + \
+                                          " - " + unread_items[pos].feed_title + " " +\
                                           unread_items[pos].title)
-    content_view.refresh_display()
-
-    account = Account()
-    account = account.verify_user_info()
 
     account.change_read_status(unread_items[pos].feed_item_id, True)
     unread_items[pos].read = True
+    content_view.refresh_display()
     
     while True:
-        if account.color_changed is True:
-            update_color(content_view, account)
-        
         if unread_items[pos].read is False:
             content_view.bottom_bar.left_flags[2] = "•"
         if unread_items[pos].read is True:
@@ -198,6 +217,7 @@ def display_item_body(pos, content, unread_items, account):
             content_view.bottom_bar.left_flags[3] = "-"
 
         content_view.bottom_bar.update_bar()
+
     
         c = stdscr.getch()
         if c == curses.KEY_RESIZE:
@@ -406,8 +426,7 @@ def display_feed_items(items, account):
             stdscr.clear(); stdscr.refresh()
             read_pos = item_list_view.highlight_pos
             read_pos += display_item_body(read_pos,
-                                          items[item_list_view.highlight_pos].body,
-                                          content_view, items)
+                                          items[item_list_view.highlight_pos].body, items, account)
 
             while read_pos >= 0:
                 if read_pos == len(items):
@@ -415,8 +434,7 @@ def display_feed_items(items, account):
                 else:
                     stdscr.clear(); stdscr.refresh()
                     read_pos += display_item_body(read_pos,
-                                                  items[read_pos].body,
-                                                  content_view, items)
+                                                  items[read_pos].body, items, account)
             read_pos = 1
 
 
@@ -535,17 +553,14 @@ def main(stdscr):
             stdscr.clear(); stdscr.refresh()
             read_pos = item_list_view.highlight_pos
             read_pos += display_item_body(read_pos,
-                                          unread_items[item_list_view.highlight_pos].body,
-                                          unread_items)
+                                          unread_items[item_list_view.highlight_pos].body, unread_items, account)
 
             while read_pos >= 0:
                 if read_pos == len(unread_items):
                     read_pos = -1
                 else:
                     stdscr.clear(); stdscr.refresh()
-                    read_pos += display_item_body(read_pos,
-                                                  unread_items[read_pos].body,
-                                                  content_view, unread_items)
+                    read_pos += display_item_body(read_pos, unread_items[read_pos].body, unread_items)
             read_pos = 1
 
         elif c == ord('o'):

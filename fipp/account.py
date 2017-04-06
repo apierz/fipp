@@ -49,6 +49,14 @@ class FeedItem():
 
         return header_string
 
+    def get_date_time(self):
+        t1=time.localtime(self.published_at)
+
+        time_string = "| " + str(t1.tm_hour) + ":" + str(t1.tm_min) + " " + str(t1.tm_mday) + "/" + str(t1.tm_mon) + " |"
+
+        return time_string
+        
+
     def format_date(self, date_int):
         t1=time.localtime(date_int)
         t2=time.localtime()

@@ -57,7 +57,6 @@ def add_account(account):
             break  # Exit the while loop
 
 def color_to_num(color):
-    num = 0
     if color is "White":
         num = 7
     if color is "Black":
@@ -77,7 +76,6 @@ def color_to_num(color):
     return num
 
 def num_to_color(num):
-    color = "Black"
     if num is 7:
         color = "White"
     if num is 0:
@@ -99,8 +97,8 @@ def num_to_color(num):
 def display_settings(account):
     settings_menu = [["Bar Foreground", "White", "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
                      ["Bar Background", "Black", "White", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
-                     ["Main Foreground", "Black", "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
-                     ["Main Background", "White", "White", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
+                     ["Main Foreground", "Black", "White", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
+                     ["Main Background", "White", "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
                      ["Highlight Foreground", "White", "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
                      ["HighLight Background", "Yellow", "White", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
                      ["Textbox Foreground", "White", "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
@@ -201,8 +199,18 @@ def display_item_body(pos, content, unread_items, account):
                                           " - " + unread_items[pos].feed_title + " " +\
                                           unread_items[pos].title)
 
-    account.change_read_status(unread_items[pos].feed_item_id, True)
-    unread_items[pos].read = True
+    #attempt to update read status
+    result = account.change_read_status(unread_items[pos].feed_item_id, True)
+    error = False
+
+    if type(result) is str:
+        old_bottom = content_view.bottom_bar.bar_content
+        content_view.bottom_bar.bar_content = result
+        content_view.bottom_bar.update_bar()
+        error = True
+    else:
+        unread_items[pos].read = True
+
     content_view.refresh_display()
     
     while True:
@@ -217,9 +225,14 @@ def display_item_body(pos, content, unread_items, account):
             content_view.bottom_bar.left_flags[3] = "-"
 
         content_view.bottom_bar.update_bar()
-
     
         c = stdscr.getch()
+        
+        if error is True:
+            content_view.bottom_bar.bar_content = old_bottom
+            content_view.bottom_bar.update_bar()
+            error = False
+        
         if c == curses.KEY_RESIZE:
             content_view.resize_con()
 
@@ -259,6 +272,7 @@ def display_item_body(pos, content, unread_items, account):
     return -999
 
 def display_feed_list(account):
+    error = False
     user_feeds = account.feeds
     feed_names = []
     for feed in user_feeds:
@@ -281,7 +295,11 @@ def display_feed_list(account):
         user_feeds = account.feeds
         feed_list_view.refresh_display()
         c = stdscr.getch()
-        feed_list_view.bottom_bar.bar_content = "Subscribed Feeds [" + account.service + "]"
+
+        if error is True:
+            feed_list_view.bottom_bar.bar_content = "Subscribed Feeds [" + account.service + "]"
+            error = False
+
         if c == curses.KEY_RESIZE:
             feed_list_view.resize_con()
 
@@ -296,6 +314,7 @@ def display_feed_list(account):
                 if type(result) is str:
                     feed_list_view.bottom_bar.bar_content = result
                     feed_list_view.bottom_bar.update_bar()
+                    error = True
                 time.sleep(4.0)
                 account.load_feeds()
                 account = account.verify_user_info()
@@ -312,6 +331,7 @@ def display_feed_list(account):
                 if type(result) is str:
                     feed_list_view.bottom_bar.bar_content = result
                     feed_list_view.bottom_bar.update_bar()
+                    error = True
                 time.sleep(2.0)
                 account.load_feeds()
                 account = account.verify_user_info()
@@ -392,6 +412,7 @@ def display_feed_items(items, account):
 
         item_list_view.refresh_display()
         c = stdscr.getch()
+
         if c == curses.KEY_RESIZE:
             stdscr.clear()
             item_list_view.resize_con()
@@ -405,23 +426,31 @@ def display_feed_items(items, account):
             if items[item_list_view.highlight_pos].read is True:
                 read = False
                 unread_count += 1
-                items[item_list_view.highlight_pos].read = False
             else:
                 read = True
                 unread_count -= 1
-                items[item_list_view.highlight_pos].read = True
-            read_mod = True
-            account.change_read_status(items[item_list_view.highlight_pos].feed_item_id, read)
+            result = account.change_read_status(items[item_list_view.highlight_pos].feed_item_id, read)
+            if type(result) is str:
+                    feed_list_view.bottom_bar.bar_content = result
+                    feed_list_view.bottom_bar.update_bar()
+            else:
+                items[item_list_view.highlight_pos].read = read
+                read_mod = True
+
+
         elif c == ord('s'):
             starred = None
             if items[item_list_view.highlight_pos].starred is True:
                 starred = False
-                items[item_list_view.highlight_pos].starred = False
             else:
                 starred = True
-                items[item_list_view.highlight_pos].starred = True
-            star_mod = True
-            account.change_star_status(items[item_list_view.highlight_pos].feed_item_id, starred)
+            result = account.change_star_status(items[item_list_view.highlight_pos].feed_item_id, starred)
+            if type(result) is str:
+                    feed_list_view.bottom_bar.bar_content = result
+                    feed_list_view.bottom_bar.update_bar()
+            else:
+                items[item_list_view.highlight_pos].starred = starred
+                star_mod = True
         elif c == curses.KEY_ENTER or c == 10 or c == 13:
             stdscr.clear(); stdscr.refresh()
             read_pos = item_list_view.highlight_pos
@@ -460,6 +489,7 @@ def main(stdscr):
     read_pos = None
     read_mod = False
     star_mod = False
+    error_flag = False
 
     account = Account()
     account = account.verify_user_info()
@@ -467,7 +497,12 @@ def main(stdscr):
     while account is False:
         account = add_account(account)
 
-    unread_items = account.get_unread_items()
+    
+    result = unread_items = account.get_unread_items()
+    if type(result) is str:
+        bottom_string = result
+        error_flag = True
+    
 
     item_headers = []
     for item in unread_items:
@@ -504,13 +539,20 @@ def main(stdscr):
             item_list_view.bottom_bar.left_flags[3] = "-"
 
 
-        item_list_view.bottom_bar.bar_content = str(len(unread_items)) + \
+        if error_flag is True:
+            item_list_view.bottom_bar_bar_content = bottom_string
+            error_flag = False
+        else:
+            item_list_view.bottom_bar.bar_content = str(len(unread_items)) + \
                                                      " unread items in " + \
                                                      account.service + " account"
 
         item_list_view.refresh_display()
 
         c = stdscr.getch()
+        item_list_view.bottom_bar.bar_content = str(len(unread_items)) + \
+                                                    " unread items in " + \
+                                                    account.service + " account"
         if c == curses.KEY_RESIZE:
             stdscr.clear()
             item_list_view.resize_con()
@@ -523,22 +565,28 @@ def main(stdscr):
             read = None
             if unread_items[item_list_view.highlight_pos].read is True:
                 read = False
-                unread_items[item_list_view.highlight_pos].read = False
             else:
                 read = True
-                unread_items[item_list_view.highlight_pos].read = True
-            read_mod = True
-            account.change_read_status(unread_items[item_list_view.highlight_pos].feed_item_id, read)
+            result = account.change_read_status(unread_items[item_list_view.highlight_pos].feed_item_id, read)
+            if type(result) is str:
+                bottom_string = result
+                error_flag = True
+            else:
+                unread_items[item_list_view.highlight_pos].read = read
+                read_mod = True
         elif c == ord('s'):
             starred = None
             if unread_items[item_list_view.highlight_pos].starred is True:
                 starred = False
-                unread_items[item_list_view.highlight_pos].starred = False
             else:
                 starred = True
-                unread_items[item_list_view.highlight_pos].starred = True
-            star_mod = True
-            account.change_star_status(unread_items[item_list_view.highlight_pos].feed_item_id, starred)
+            result = account.change_star_status(unread_items[item_list_view.highlight_pos].feed_item_id, starred)
+            if type(result) is str:
+                bottom_string = result
+                error_flag = True
+            else:
+                unread_items[item_list_view.highlight_pos].starred = starred
+                star_mod = True
         elif c == ord('r'):
             unread_items = account.get_unread_items()
             item_headers = []
@@ -569,7 +617,6 @@ def main(stdscr):
         elif c == ord('q'):
             account.save_user_info()
             break  # Exit the while loop
-
 
 wrapper(main)
 

@@ -125,28 +125,33 @@ class Account():
 
     def add_feed(self, url):
         if self.service == "Feed Wrangler":
-            response = urllib.request.urlopen(FW_API_URL + \
-                        "/subscriptions/add_feed_and_wait?access_token=" + \
-                        self.key + "&choose_first=true" +\
-                        "&feed_url="+url).read()
-            data = json.loads(response.decode())
-            if data['error']:
-                return data['error']
-            else:
-                return True
+            try:
+                response = urllib.request.urlopen(FW_API_URL + \
+                            "/subscriptions/add_feed_and_wait?access_token=" + \
+                            self.key + "&choose_first=true" +\
+                            "&feed_url="+url).read()
+                data = json.loads(response.decode())
+                if data['error']:
+                    return data['error']
+                else:
+                    return True
+            except:
+                return "Error reaching server"
 
     def remove_feed(self, feed_id):
         if self.service == "Feed Wrangler":
-            response = urllib.request.urlopen(FW_API_URL + \
-                        "subscriptions/remove_feed?access_token=" + \
-                        self.key + \
-                        "&feed_id=" + feed_id).read()
-            data = json.loads(response.decode())
-            if data['error']:
-                return data['error']
-            else:
-                return True
-
+            try:
+                response = urllib.request.urlopen(FW_API_URL + \
+                            "subscriptions/remove_feed?access_token=" + \
+                            self.key + \
+                            "&feed_id=" + feed_id).read()
+                data = json.loads(response.decode())
+                if data['error']:
+                    return data['error']
+                else:
+                    return True
+            except:
+                return "Error reaching server"
 
     def process_data(self, data):
         if self.service == "Feed Wrangler":
@@ -176,27 +181,45 @@ class Account():
                 return feed_items
 
     def get_starred_items(self):
-        if self.service == "Feed Wrangler":
-            response = urllib.request.urlopen(FW_API_URL + "feed_items/list?starred=true" + \
-                                                  "&access_token=" + self.key).read()
-            data = json.loads(response.decode())
-            return self.process_data(data)
+        try:
+            if self.service == "Feed Wrangler":
+                response = urllib.request.urlopen(FW_API_URL + "feed_items/list?starred=true" + \
+                                                    "&access_token=" + self.key).read()
+                data = json.loads(response.decode())
+                if data['error']:
+                    return data['error']
+                else:
+                    return self.process_data(data)
+        except:
+            return "Error reaching server"
 
     def get_most_recent(self, feed):
-        if self.service == "Feed Wrangler":
-            response = urllib.request.urlopen(FW_API_URL + "feed_items/list?feed_id=" + \
-                                                  str(feed.feed_id) + \
-                                                  "&limit=25" + \
-                                                  "&access_token=" + self.key).read()
-            data = json.loads(response.decode())
-            return self.process_data(data)
+        try:
+            if self.service == "Feed Wrangler":
+                response = urllib.request.urlopen(FW_API_URL + "feed_items/list?feed_id=" + \
+                                                    str(feed.feed_id) + \
+                                                    "&limit=25" + \
+                                                    "&access_token=" + self.key).read()
+                data = json.loads(response.decode())
+                if data['error']:
+                    return data['error']
+                else:
+                    return self.process_data(data)
+        except:
+            return "Error reaching server"
 
     def get_unread_items(self):
-        if self.service == "Feed Wrangler":
-            response = urllib.request.urlopen(FW_API_URL + "/feed_items/list?access_token=" +
-                                                    self.key + "&read=false").read()
-            data = json.loads(response.decode())
-            return self.process_data(data)
+        try:
+            if self.service == "Feed Wrangler":
+                response = urllib.request.urlopen(FW_API_URL + "/feed_items/list?access_token=" +
+                                                        self.key + "&read=false").read()
+                data = json.loads(response.decode())
+                if data['error']:
+                    return data['error']
+                else:
+                    return self.process_data(data)
+        except:
+            return "Error reaching server"
 
     def save_user_info(self):
         outFile = open("user_info", "wb")
@@ -207,12 +230,9 @@ class Account():
         my_file = Path("user_info")
         if my_file.is_file():
             f = open("user_info", "rb")
-            # try:
             data = f.read()
             uaccount = pickle.loads(data)
             uaccount.load_feeds()
-            # except:
-                # return Account("Error", "In", "verify")
             f.close()
             service = uaccount.service
 
@@ -226,22 +246,25 @@ class Account():
 
     def load_feeds(self):
         if self.service == "Feed Wrangler":
-            if self.key != "":
-                response = urllib.request.urlopen(FW_API_URL + "subscriptions/list?access_token=" + self.key).read()
-                data = json.loads(response.decode())
-                if data['error']:
-                    return data['error']
-                else:
-                    self.feeds = []
-                    for feed in data['feeds']:
-                        feed_sub = Feed(feed['title'],
-                                            feed['feed_id'],
-                                            feed['feed_url'],
-                                            feed['site_url'],
-                                            self)
-                        self.feeds.append(feed_sub)
+            try:
+                if self.key != "":
+                    response = urllib.request.urlopen(FW_API_URL + "subscriptions/list?access_token=" + self.key).read()
+                    data = json.loads(response.decode())
+                    if data['error']:
+                        return data['error']
+                    else:
+                        self.feeds = []
+                        for feed in data['feeds']:
+                            feed_sub = Feed(feed['title'],
+                                                feed['feed_id'],
+                                                feed['feed_url'],
+                                                feed['site_url'],
+                                                self)
+                            self.feeds.append(feed_sub)
 
-                    self.save_user_info()
+                        self.save_user_info()
+            except:
+                return "Error reaching server"
 
     def change_star_status(self, item_id, status):
        if self.service == "Feed Wrangler":
@@ -253,17 +276,20 @@ class Account():
            if data['error']:
                return data['error']
            else:
-               return data['result']
+               return True
 
     def change_read_status(self, item_id, status):
         if self.service == "Feed Wrangler":
-            response = urllib.request.urlopen(FW_API_URL + "feed_items/update?access_token=" +
-                                                self.key + "&feed_item_id=" +
-                                                str(item_id) + "&read=" +
-                                                str(status).lower()).read()
+            try:
+                response = urllib.request.urlopen(FW_API_URL + "feed_items/update?access_token=" +
+                                                    self.key + "&feed_item_id=" +
+                                                    str(item_id) + "&read=" +
+                                                    str(status).lower()).read()
 
-            data = json.loads(response.decode())
-            if data['error']:
-                return data['error']
-            else:
-                return data['result']
+                data = json.loads(response.decode())
+                if data['error']:
+                    return data['error']
+                else:
+                    return True
+            except:
+                return "Error reaching server"

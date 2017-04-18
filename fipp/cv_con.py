@@ -15,6 +15,78 @@ def create_color_pair(foreground, background):
     color_pair_number += 1
     return (curses.color_pair(holder), holder)
 
+
+class CV_Vscrollbar():
+    def __init__(self, color_pair, color_pair_index):
+        self.v_scrollchar = "▓"
+        self.color_pair = color_pair
+        self.color_pair_index = color_pair_index
+        self.pad = curses.newpad(curses.LINES,1)
+
+    def update(self, vscrollpos, length):
+        ind_size = int((curses.LINES-2) / length * (curses.LINES-2))
+
+        if vscrollpos > 0:
+            ind_start = vscrollpos / (length-curses.LINES+2)
+            ind_start = int(ind_start * (curses.LINES-2-ind_size))
+            if ind_start is 0:
+                ind_start = 1
+        else:
+            ind_start = 0
+            
+
+        bound = curses.LINES - 2
+        for x in range(0, bound):
+            if x >= ind_start and x <= (ind_start + ind_size):
+                self.pad.addstr(x,0,
+                                self.v_scrollchar,
+                                curses.color_pair(self.color_pair_index))
+            else:
+                self.pad.addstr(x,0,
+                                " ",
+                                curses.color_pair(self.color_pair_index))
+
+        if length > curses.LINES-2:
+            self.pad.refresh(0,0,
+                        1, curses.COLS-1,
+                        curses.LINES-2,curses.COLS-1)
+class CV_Hscrollbar():
+    def __init__(self, color_pair, color_pair_index):
+        self.h_scrollchar = "▓"
+        self.color_pair = color_pair
+        self.color_pair_index = color_pair_index
+        self.pad = curses.newpad(1,curses.COLS+1)
+
+    def update(self, hscrollpos, width):
+        ind_size = int((curses.COLS-1) / width * (curses.COLS-1))
+
+        if hscrollpos > 0:
+            ind_start = hscrollpos / (width-curses.COLS)
+            ind_start = int(ind_start * (curses.COLS-1-ind_size))
+            if ind_start is 0:
+                ind_start = 1
+        else:
+            ind_start = 0
+            
+
+        bound = curses.COLS
+        scroll_string = ""
+        for x in range(0, bound):
+            if x >= ind_start and x <= (ind_start + ind_size):
+                scroll_string += self.h_scrollchar
+            else:
+                scroll_string += " "
+
+        self.pad.addstr(0,0,
+                        scroll_string,
+                        curses.color_pair(self.color_pair_index))
+
+        if width > curses.COLS:
+            self.pad.refresh(0,0,
+                        curses.LINES-2, 0,
+                        curses.LINES-2,curses.COLS-1)
+        
+
 class CV_bar():
     #A top and/or bottom bar for view controllers
     def __init__(self, content_string, location, color_pair, color_pair_index):
@@ -92,8 +164,9 @@ class CCV_con():
                      bottom_string,
                      top_bar_colors = [7,0],
                      bottom_bar_colors = [7,0],
-                     content_colors = [0,7]):
-
+                     content_colors = [0,7],
+                     scrollbars = False,
+                     scrollbar_colors = [0,7]):
         
         color = create_color_pair(bottom_bar_colors[0], bottom_bar_colors[1])
         self.bottom_bar_colors = color[0]
@@ -132,6 +205,15 @@ class CCV_con():
                                         filler_string,
                                         curses.color_pair(self.content_colors_index))
 
+        if scrollbars is True:
+            color = create_color_pair(scrollbar_colors[0], scrollbar_colors[1])
+            self.vscrollbar = CV_Vscrollbar(color[0], color[1])
+            if self.content_width >= curses.COLS:
+                self.content_width -= 1
+
+            self.hscrollbar = CV_Hscrollbar(color[0], color[1])
+
+
     def update_content(self, content):
         self.content = content
         lines = ((len(content)/self.content_width) * 4) + curses.LINES
@@ -169,6 +251,8 @@ class CCV_con():
         self._string_content_handler()
 
         self.content_pad.refresh(0,0, 1,0, curses.LINES - 2,curses.COLS - 1)
+        self.vscrollbar.update(self.v_scroll_position, self.content_lines)
+        self.hscrollbar.update(self.h_scroll_position, self.content_width)
 
     def _string_content_handler(self):
         #Deterimines if content string is plain text or html and parses it
@@ -396,6 +480,8 @@ class CCV_con():
             self.scroll_ind_check()
             self.top_bar.update_bar()
             self.bottom_bar.update_bar()
+            self.vscrollbar.update(self.v_scroll_position, (self.content_lines))
+            self.hscrollbar.update(self.h_scroll_position, self.content_width)
 
     def scrolldown(self):
         #scrolls the display down
@@ -408,6 +494,8 @@ class CCV_con():
             self.scroll_ind_check()
             self.top_bar.update_bar()
             self.bottom_bar.update_bar()
+            self.vscrollbar.update(self.v_scroll_position, (self.content_lines))
+            self.hscrollbar.update(self.h_scroll_position, self.content_width)
 
     def scrollright(self):
         #scrolls the display right
@@ -421,6 +509,8 @@ class CCV_con():
             self.scroll_ind_check()
             self.top_bar.update_bar()
             self.bottom_bar.update_bar()
+            self.vscrollbar.update(self.v_scroll_position, (self.content_lines))
+            self.hscrollbar.update(self.h_scroll_position, self.content_width)
 
 
     def scrollleft(self):
@@ -434,6 +524,8 @@ class CCV_con():
             self.scroll_ind_check()
             self.top_bar.update_bar()
             self.bottom_bar.update_bar()
+            self.vscrollbar.update(self.v_scroll_position, (self.content_lines))
+            self.hscrollbar.update(self.h_scroll_position, self.content_width)
 
     def change_bar_color(self, position, foreground, background):
         #Change the controller's bar colors

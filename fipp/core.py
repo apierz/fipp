@@ -18,11 +18,16 @@ def add_account(account):
 
     account_view_info = [["Service", "Feed Wrangler", "Feed Bin"], ["Username", " "], ["Password", " "], "Verify Account"]
 
-    account_view = CFLV_con(stdscr, account_view_info,
+    if account is not False:
+        account_view = CFLV_con(stdscr, account_view_info,
                                 "q:Back  c:Cycle Options  r:Reset to default  e:Edit",
                                 "Verify Account Info", [account.bf_col, account.bb_col], [account.bf_col, account.bb_col],
                                   [account.mf_col, account.mb_col], [account.hf_col, account.hb_col],
                                   [account.tf_col, account.tb_col])
+    else:
+        account_view = CFLV_con(stdscr, account_view_info,
+                                "q:Back  c:Cycle Options  r:Reset to default  e:Edit",
+                                "Verify Account Info")
     stdscr.clear()
     stdscr.refresh()
     account_view.refresh_display()
@@ -95,20 +100,34 @@ def num_to_color(num):
     return color
 
 def display_settings(account):
-    settings_menu = [["Bar Foreground", "White", "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
-                     ["Bar Background", "Black", "White", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
-                     ["Main Foreground", "Black", "White", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
-                     ["Main Background", "White", "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
-                     ["Highlight Foreground", "White", "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
-                     ["HighLight Background", "Yellow", "White", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
-                     ["Textbox Foreground", "White", "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"],
-                     ["Textbox Background", "Blue", "Black", "White", "Red", "Green", "Yellow", "Magenta", "Cyan"]]
+    settings_menu = [["Bar Foreground", "White", "Black", "Red", "Green",
+                          "Yellow", "Blue", "Magenta", "Cyan"],
+                     ["Bar Background", "Black", "White", "Red", "Green",
+                          "Yellow", "Blue", "Magenta", "Cyan"],
+                     ["Main Foreground", "Black", "White", "Red", "Green",
+                          "Yellow", "Blue", "Magenta", "Cyan"],
+                     ["Main Background", "White", "Black", "Red", "Green",
+                          "Yellow", "Blue", "Magenta", "Cyan"],
+                     ["Highlight Foreground", "White", "Black", "Red", "Green",
+                          "Yellow", "Blue", "Magenta", "Cyan"],
+                     ["HighLight Background", "Yellow", "White", "Red", "Green",
+                          "Yellow", "Blue", "Magenta", "Cyan"],
+                     ["Textbox Foreground", "White", "Black", "Red", "Green",
+                          "Yellow", "Blue", "Magenta", "Cyan"],
+                     ["Textbox Background", "Blue", "Black", "White", "Red",
+                          "Green", "Yellow", "Magenta", "Cyan"],
+                     ["Scrollbar Foreground", "White", "Black", "Red", "Green",
+                          "Yellow", "Blue", "Magenta", "Cyan"],
+                     ["Scrollbar Background", "Blue", "Black", "White", "Red",
+                          "Green", "Yellow", "Magenta", "Cyan"]]
 
     settings_view = CFLV_con(stdscr, settings_menu,
                                  "q:Back  c:Cycle Options  r:Reset to default",
                                  "Options",
-                                 [account.bf_col, account.bb_col], [account.bf_col, account.bb_col],
-                                 [account.mf_col, account.mb_col], [account.hf_col, account.hb_col])
+                                 [account.bf_col, account.bb_col],
+                                 [account.bf_col, account.bb_col],
+                                 [account.mf_col, account.mb_col],
+                                 [account.hf_col, account.hb_col])
 
     settings_view.list_items[0].selected_item = num_to_color(account.bf_col)
     settings_view.list_items[0].selected_index = settings_view.list_items[0].options.index(num_to_color(account.bf_col))
@@ -126,7 +145,11 @@ def display_settings(account):
     settings_view.list_items[6].selected_index = settings_view.list_items[6].options.index(num_to_color(account.tf_col))
     settings_view.list_items[7].selected_item = num_to_color(account.tb_col)
     settings_view.list_items[7].selected_index = settings_view.list_items[7].options.index(num_to_color(account.tb_col))
-    
+    settings_view.list_items[8].selected_item = num_to_color(account.sf_col)
+    settings_view.list_items[8].selected_index = settings_view.list_items[8].options.index(num_to_color(account.sf_col))
+    settings_view.list_items[9].selected_item = num_to_color(account.sb_col)
+    settings_view.list_items[9].selected_index = settings_view.list_items[9].options.index(num_to_color(account.sb_col))
+
     stdscr.clear()
     stdscr.refresh()
     settings_view.refresh_display()
@@ -161,9 +184,13 @@ def display_settings(account):
                 account.hb_col = color_to_num(settings_view.list_items[5].selected_item)
             if settings_view.highlight_pos is 6:
                 account.tf_col = color_to_num(settings_view.list_items[6].selected_item)
-            if settings_view.highlight_pos is 6:
+            if settings_view.highlight_pos is 7:
                 account.tb_col = color_to_num(settings_view.list_items[7].selected_item)
-                
+            if settings_view.highlight_pos is 8:
+                account.sf_col = color_to_num(settings_view.list_items[8].selected_item)
+            if settings_view.highlight_pos is 9:
+                account.sb_col = color_to_num(settings_view.list_items[9].selected_item)
+
         elif c == curses.KEY_UP or c == ord('r'):
             settings_view.reset_to_default(settings_view.highlight_pos)
             account.color_changed = True
@@ -181,23 +208,29 @@ def display_settings(account):
                 account.hb_col = color_to_num(settings_view.list_items[5].selected_item)
             if settings_view.highlight_pos is 6:
                 account.tf_col = color_to_num(settings_view.list_items[6].selected_item)
-            if settings_view.highlight_pos is 6:
+            if settings_view.highlight_pos is 7:
                 account.tb_col = color_to_num(settings_view.list_items[7].selected_item)
+            if settings_view.highlight_pos is 8:
+                account.sf_col = color_to_num(settings_view.list_items[7].selected_item)
+            if settings_view.highlight_pos is 9:
+                account.sb_col = color_to_num(settings_view.list_items[7].selected_item)
 
         elif c == ord('q'):
             account.save_user_info()
             return False
             break  # Exit the while loop
-    
 
 def display_item_body(pos, content, unread_items, account):
     content_view = CCV_con(stdscr, content, 80, "q:Back  m:Mark (un)read  s:(un)Star  n:Next  p:Prev", "Title, Info, Etc",
                                   [account.bf_col, account.bb_col], [account.bf_col, account.bb_col],
-                                  [account.mf_col, account.mb_col])
+                                  [account.mf_col, account.mb_col], True,
+                                  [account.sf_col, account.sb_col])
+    content_view.refresh_display()
 
     content_view.bottom_bar.update_bar(unread_items[pos].get_date_time() + \
-                                          " - " + unread_items[pos].feed_title + " " +\
-                                          unread_items[pos].title)
+                                          unread_items[pos].feed_title + " - " +\
+                                          unread_items[pos].title + " by: " +\
+                                          unread_items[pos].author)
 
     #attempt to update read status
     result = account.change_read_status(unread_items[pos].feed_item_id, True)
@@ -212,7 +245,7 @@ def display_item_body(pos, content, unread_items, account):
         unread_items[pos].read = True
 
     content_view.refresh_display()
-    
+
     while True:
         if unread_items[pos].read is False:
             content_view.bottom_bar.left_flags[2] = "•"
@@ -225,14 +258,14 @@ def display_item_body(pos, content, unread_items, account):
             content_view.bottom_bar.left_flags[3] = "-"
 
         content_view.bottom_bar.update_bar()
-    
+
         c = stdscr.getch()
-        
+
         if error is True:
             content_view.bottom_bar.bar_content = old_bottom
             content_view.bottom_bar.update_bar()
             error = False
-        
+
         if c == curses.KEY_RESIZE:
             content_view.resize_con()
 
@@ -281,8 +314,10 @@ def display_feed_list(account):
     feed_list_view = CDLV_con(stdscr, feed_names,
                                  "q:Back  a:Add Feed  d:Remove Feed",
                                  "Subscribed Feeds [" + account.service + "]",
-                                  [account.bf_col, account.bb_col], [account.bf_col, account.bb_col],
-                                  [account.mf_col, account.mb_col], [account.hf_col, account.hb_col],
+                                  [account.bf_col, account.bb_col],
+                                  [account.bf_col, account.bb_col],
+                                  [account.mf_col, account.mb_col],
+                                  [account.hf_col, account.hb_col],
                                   [account.tf_col, account.tb_col])
 
     stdscr.clear()
@@ -291,13 +326,14 @@ def display_feed_list(account):
     while True:
         if account.color_changed is True:
             update_color(feed_list_view, account)
-        
+
         user_feeds = account.feeds
         feed_list_view.refresh_display()
         c = stdscr.getch()
 
         if error is True:
-            feed_list_view.bottom_bar.bar_content = "Subscribed Feeds [" + account.service + "]"
+            feed_list_view.bottom_bar.bar_content = "Subscribed Feeds [" + \
+              account.service + "]"
             error = False
 
         if c == curses.KEY_RESIZE:
@@ -343,8 +379,6 @@ def display_feed_list(account):
                 stdscr.clear()
                 stdscr.refresh()
                 feed_list_view._adjust_to_changes()
-
-
         elif c == curses.KEY_ENTER or c == 10 or c == 13:
             recent_items = account.get_most_recent(user_feeds[feed_list_view.highlight_pos])
             display_feed_items(recent_items, account)
@@ -363,10 +397,13 @@ def display_feed_items(items, account):
     for item in items:
         item_headers.append(item.get_header_string())
 
-    item_list_view = CDLV_con(stdscr, item_headers, "q:Back  m:Mark (un)read  s:(un)Star",
+    item_list_view = CDLV_con(stdscr, item_headers,
+                                "q:Back  m:Mark (un)read  s:(un)Star",
                                 "A helpful bottom message",
-                                  [account.bf_col, account.bb_col], [account.bf_col, account.bb_col],
-                                  [account.mf_col, account.mb_col], [account.hf_col, account.hb_col],
+                                  [account.bf_col, account.bb_col],
+                                  [account.bf_col, account.bb_col],
+                                  [account.mf_col, account.mb_col],
+                                  [account.hf_col, account.hb_col],
                                   [account.tf_col, account.tb_col])
 
     while True:
@@ -401,7 +438,7 @@ def display_feed_items(items, account):
         titles = []
         for item in items:
             titles.append(item.feed_title)
-            
+
         if len(titles) > 1 and len(set(titles)) > 1:
             bottom_string = str(len(items)) + " starred items from [" + account.service + "]"
         else:
@@ -481,7 +518,7 @@ def update_color(view_con, account):
             view_con.change_text_entry_color(account.tf_col, account.tb_col)
 
         view_con.color_changed = False
-        
+
 def main(stdscr):
 
     stdscr.clear(); stdscr.refresh()
@@ -497,55 +534,57 @@ def main(stdscr):
     while account is False:
         account = add_account(account)
 
-    
     result = unread_items = account.get_unread_items()
     if type(result) is str:
         bottom_string = result
         error_flag = True
-    
+        item_headers = [""]
+    else:
+        for item in unread_items:
+            item_headers.append(item.get_header_string())
 
-    item_headers = []
-    for item in unread_items:
-        item_headers.append(item.get_header_string())
-
-    item_list_view = CDLV_con(stdscr, item_headers, "q:Quit  m:Mark (un)read  s:(un)Star  r:Refresh  l:List feeds  *:Starred items  o:Options",
-                                  "A helpful bottom message", [account.bf_col, account.bb_col], [account.bf_col, account.bb_col],
-                                  [account.mf_col, account.mb_col], [account.hf_col, account.hb_col])
+    item_list_view = CDLV_con(stdscr, item_headers,
+                                  "q:Quit  m:Mark (un)read  s:(un)Star  r:Refresh  l:List feeds  *:Starred items  o:Options",
+                                  "A helpful bottom message",
+                                  [account.bf_col, account.bb_col],
+                                  [account.bf_col, account.bb_col],
+                                  [account.mf_col, account.mb_col],
+                                  [account.hf_col, account.hb_col])
 
     while True:
 
         if account.color_changed is True:
             update_color(item_list_view, account)
-        
-        for pos, item in enumerate(unread_items):
-            if item.read is False:
-                item_list_view.list_items[pos].flags[1] = "•"
-            if item.read is True:
-                item_list_view.list_items[pos].flags[1] = " "
 
-            if item.starred is True:
-                item_list_view.list_items[pos].flags[3] = "*"
-            if item.starred is False:
-                item_list_view.list_items[pos].flags[3] = " "
+        if error_flag is False:
+            for pos, item in enumerate(unread_items):
+                if item.read is False:
+                    item_list_view.list_items[pos].flags[1] = "•"
+                if item.read is True:
+                    item_list_view.list_items[pos].flags[1] = " "
 
-        if read_mod is True:
-            item_list_view.bottom_bar.left_flags[2] = "•"
-        if read_mod is False:
-            item_list_view.bottom_bar.left_flags[2] = "-"
+                if item.starred is True:
+                    item_list_view.list_items[pos].flags[3] = "*"
+                if item.starred is False:
+                    item_list_view.list_items[pos].flags[3] = " "
 
-        if star_mod is True:
-            item_list_view.bottom_bar.left_flags[3] = "*"
-        if star_mod is False:
-            item_list_view.bottom_bar.left_flags[3] = "-"
+            if read_mod is True:
+                item_list_view.bottom_bar.left_flags[2] = "•"
+            if read_mod is False:
+                item_list_view.bottom_bar.left_flags[2] = "-"
+
+            if star_mod is True:
+                item_list_view.bottom_bar.left_flags[3] = "*"
+            if star_mod is False:
+                item_list_view.bottom_bar.left_flags[3] = "-"
 
 
         if error_flag is True:
-            item_list_view.bottom_bar_bar_content = bottom_string
-            error_flag = False
+            item_list_view.bottom_bar.bar_content = bottom_string
         else:
             item_list_view.bottom_bar.bar_content = str(len(unread_items)) + \
-                                                     " unread items in " + \
-                                                     account.service + " account"
+                                                    " unread items in " + \
+                                                    account.service + " account"
 
         item_list_view.refresh_display()
 
@@ -556,67 +595,82 @@ def main(stdscr):
         if c == curses.KEY_RESIZE:
             stdscr.clear()
             item_list_view.resize_con()
-
-        if c == curses.KEY_DOWN or c == ord('j'):
-            item_list_view.scrolldown_list()
-        elif c == curses.KEY_UP or c == ord('k'):
-            item_list_view.scrollup_list()
-        elif c == ord('m'):
-            read = None
-            if unread_items[item_list_view.highlight_pos].read is True:
-                read = False
-            else:
-                read = True
-            result = account.change_read_status(unread_items[item_list_view.highlight_pos].feed_item_id, read)
-            if type(result) is str:
-                bottom_string = result
-                error_flag = True
-            else:
-                unread_items[item_list_view.highlight_pos].read = read
-                read_mod = True
-        elif c == ord('s'):
-            starred = None
-            if unread_items[item_list_view.highlight_pos].starred is True:
-                starred = False
-            else:
-                starred = True
-            result = account.change_star_status(unread_items[item_list_view.highlight_pos].feed_item_id, starred)
-            if type(result) is str:
-                bottom_string = result
-                error_flag = True
-            else:
-                unread_items[item_list_view.highlight_pos].starred = starred
-                star_mod = True
         elif c == ord('r'):
-            unread_items = account.get_unread_items()
             item_headers = []
-            for item in unread_items:
-                item_headers.append(item.get_header_string())
-            item_list_view.update_list_items(item_headers)
-        elif c == ord('l'):
-            display_feed_list(account)
-        elif c == ord('*'):
-            display_feed_items(account.get_starred_items(), account)
-        elif c == curses.KEY_ENTER or c == 10 or c == 13:
-            stdscr.clear(); stdscr.refresh()
-            read_pos = item_list_view.highlight_pos
-            read_pos += display_item_body(read_pos,
-                                          unread_items[item_list_view.highlight_pos].body, unread_items, account)
+            result = unread_items = account.get_unread_items()
+            if type(result) is str:
+                bottom_string = result
+                error_flag = True
+                item_headers = [""]
+            else:
+                for item in unread_items:
+                    item_headers.append(item.get_header_string())
+                item_list_view.update_list_items(item_headers)
+                error_flag = False
 
-            while read_pos >= 0:
-                if read_pos == len(unread_items):
-                    read_pos = -1
-                else:
-                    stdscr.clear(); stdscr.refresh()
-                    read_pos += display_item_body(read_pos, unread_items[read_pos].body, unread_items)
-            read_pos = 1
-
+            
         elif c == ord('o'):
             display_settings(account)
 
         elif c == ord('q'):
             account.save_user_info()
             break  # Exit the while loop
+
+
+        if error_flag is False:
+            if c == curses.KEY_DOWN or c == ord('j'):
+                item_list_view.scrolldown_list()
+            elif c == curses.KEY_UP or c == ord('k'):
+                item_list_view.scrollup_list()
+            elif c == ord('m'):
+                read = None
+                if unread_items[item_list_view.highlight_pos].read is True:
+                    read = False
+                else:
+                    read = True
+                result = account.change_read_status(unread_items[item_list_view.highlight_pos].feed_item_id, read)
+                if type(result) is str:
+                    bottom_string = result
+                    error_flag = True
+                else:
+                    unread_items[item_list_view.highlight_pos].read = read
+                    read_mod = True
+            elif c == ord('s'):
+                starred = None
+                if unread_items[item_list_view.highlight_pos].starred is True:
+                    starred = False
+                else:
+                    starred = True
+                result = account.change_star_status(unread_items[item_list_view.highlight_pos].feed_item_id, starred)
+                if type(result) is str:
+                    bottom_string = result
+                    error_flag = True
+                else:
+                    unread_items[item_list_view.highlight_pos].starred = starred
+                    star_mod = True
+            elif c == ord('l'):
+                display_feed_list(account)
+            elif c == ord('*'):
+                display_feed_items(account.get_starred_items(), account)
+            elif c == curses.KEY_ENTER or c == 10 or c == 13:
+                stdscr.clear(); stdscr.refresh()
+                read_pos = item_list_view.highlight_pos
+                if len(item_headers) >=1:
+                    read_pos += display_item_body(read_pos,
+                                            unread_items[item_list_view.highlight_pos].body,
+                                                unread_items, account)
+
+                while read_pos >= 0:
+                    if read_pos == len(unread_items):
+                        read_pos = -1
+                    else:
+                        stdscr.clear(); stdscr.refresh()
+                        read_pos += display_item_body(read_pos,
+                                                    unread_items[read_pos].body,
+                                                        unread_items, account)
+                read_pos = 1
+
+
 
 wrapper(main)
 

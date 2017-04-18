@@ -7,7 +7,8 @@
 * CURRENT core
 - [X] start
 - [ ] settings/menu
-- [ ] logout
+  - [ ] account ctrls
+  - [ ] logout
 - [X] add/remove feeds
 ** Unread Item View [2/2]
    - [X] show change in status indicators in bottom bar
@@ -15,16 +16,17 @@
 ** Feed List View [2/2]
    - [X] show current feeds + unread count
    - [X] -> list of 25 most recent articles from that feed
-** Item Content View [2/2]
+** Item Content View [3/3]
    - [X] show starred status in bottom bar
    - [X] show read status in bottom bar
-   - [ ] add date of publication to bottom bar
+   - [X] add date of publication to bottom bar
 
 
-* content view controller [/]
+* ONDECK content view controller [/]
 - [ ] loading indicators
 - [ ] dynamic content width
 - [ ] scrolling bars
+- [ ] scroll pos indicators
 ** DONE horizontal scrolling [2/2]
    - [X] controls & logic 
    - [X] scrolling indicators
@@ -42,7 +44,7 @@
 - [X] insert
 - [X] del
 
-* Static List view controller
+* SOMEDAY Static List view controller
 - [ ] fix resize during text entry event
   
 * account
@@ -50,6 +52,6 @@
    - [ ] look into encrypting file, or encrypting pickle
 https://pypi.python.org/pypi/EncryptedPickle/0.1.4
 ** CURRENT add feedwrangler 
-- [ ] error handling
+- [X] error handling
 ** add feedbin
 ** add feedly

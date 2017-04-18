@@ -51,8 +51,13 @@ class FeedItem():
 
     def get_date_time(self):
         t1=time.localtime(self.published_at)
+        min_string = ""
+        if t1.tm_min < 10:
+            min_string = "0" + str(t1.tm_min)
+        else:
+            min_string = str(t1.tm_min)
 
-        time_string = "| " + str(t1.tm_hour) + ":" + str(t1.tm_min) + " " + str(t1.tm_mday) + "/" + str(t1.tm_mon) + " |"
+        time_string = "| " + str(t1.tm_hour) + ":" + min_string + " " + str(t1.tm_mon) + "/" + str(t1.tm_mday) + " |"
 
         return time_string
         
@@ -89,9 +94,14 @@ class Account():
     global FW_CLIENT_KEY
     FW_CLIENT_KEY = "77037deda1050eff59d9619d4d2f4fd4"
 
+    global FB_API_URl
+    FB_API_URl = "https://api.feedbin.com/v2/"
+    head = { "Content-Type": "application/json; charset=utf-8"}
+
     def __init__(self, username = "", password = "", service = "", key = "",
                      bf_col = 7, bb_col = 0, mf_col = 0, mb_col = 7,
-                     hf_col = 7, hb_col = 3, tf_col = 7, tb_col = 4):
+                     hf_col = 7, hb_col = 3, tf_col = 7, tb_col = 4,
+                     sf_col = 4, sb_col = 0):
         
         self.bf_col = bf_col
         self.bb_col = bb_col
@@ -101,6 +111,8 @@ class Account():
         self.hb_col = hb_col
         self.tf_col = tf_col
         self.tb_col = tb_col
+        self.sf_col = sf_col
+        self.sb_col = sb_col
         self.color_changed = False
         
         self.service = service
@@ -115,13 +127,24 @@ class Account():
                                                   "&client_key=" + FW_CLIENT_KEY).read()
             data = json.loads(response.decode())
             if data['error']:
-                key = data['error']
+                pass
             else:
                 self.key = data['access_token']
                 self.save_user_info()
             self.load_feeds()
 
             self.save_user_info()
+
+        if service == "Feedbin":
+            s = requests.Session()
+            ret = s.get("https://api.feedbin.com/v2/authentication.json", auth=(self.username, password))
+            if ret.status_code is 403:
+                pass
+            else:
+                self.key = s
+                self.save_user_info()
+            self.load_feeds()
+
 
     def add_feed(self, url):
         if self.service == "Feed Wrangler":
@@ -136,7 +159,22 @@ class Account():
                 else:
                     return True
             except:
-                return "Error reaching server"
+                return data['error']
+
+        if self.service == "Feedbin":
+            try:
+                payload = {"feed_url": url}
+                ret = self.key.post(FB_API_URl + "subscriptions.json",
+                                  data = json.dumps(payload),
+                                  headers = head,
+                                  auth=(self.username, self.password))
+                if ret.status_code is 403:
+                    return "Error Reaching Feedbin Server"
+                else:
+                    return True
+            except:
+                return "Error Reaching Feedbin Server"
+                
 
     def remove_feed(self, feed_id):
         if self.service == "Feed Wrangler":
@@ -177,6 +215,19 @@ class Account():
                                                 item['author'],
                                                 item['feed_id'],
                                                 item['feed_name'],
+                                                self.service))
+                if len(data['feed_items']) is 0:
+                    feed_items.append(FeedItem(0,
+                                               0,
+                                                0,
+                                                "none",
+                                                "no items",
+                                                False,
+                                                False,
+                                                "None",
+                                                "None",
+                                                0,
+                                                " ",
                                                 self.service))
                 return feed_items
 

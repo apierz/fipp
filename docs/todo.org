@@ -13,6 +13,7 @@
 ** Unread Item View [2/2]
    - [X] show change in status indicators in bottom bar
    - [X] show all starred items
+   - [ ] fix marking read not scrolling down to next option
 ** Feed List View [2/2]
    - [X] show current feeds + unread count
    - [X] -> list of 25 most recent articles from that feed
@@ -22,11 +23,11 @@
    - [X] add date of publication to bottom bar
 
 
-* ONDECK content view controller [/]
+* ONDECK content view controller [1/4]
 - [ ] loading indicators
 - [ ] dynamic content width
 - [ ] scrolling bars
-- [ ] scroll pos indicators
+- [X] scroll pos indicators
 ** DONE horizontal scrolling [2/2]
    - [X] controls & logic 
    - [X] scrolling indicators
@@ -51,7 +52,8 @@
 ** user data protection
    - [ ] look into encrypting file, or encrypting pickle
 https://pypi.python.org/pypi/EncryptedPickle/0.1.4
-** CURRENT add feedwrangler 
+** DONE add feedwrangler 
 - [X] error handling
-** add feedbin
+** DONE add feedbin
+** add newsblur
 ** add feedly

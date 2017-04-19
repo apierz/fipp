@@ -473,6 +473,7 @@ def display_feed_items(items, account):
             else:
                 items[item_list_view.highlight_pos].read = read
                 read_mod = True
+                item_list_view.scrolldown_list()
 
 
         elif c == ord('s'):

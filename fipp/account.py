@@ -60,10 +60,16 @@ class FeedItem():
         else:
             min_string = str(t1.tm_min)
 
+        hour_string = ""
+        if t1.tm_hour < 10:
+            hour_string = "0" + str(t1.tm_hour)
+        else:
+            hour_string = str(t1.tm_hour)
+
+
         time_string = "| " + str(t1.tm_hour) + ":" + min_string + " " + str(t1.tm_mon) + "/" + str(t1.tm_mday) + " |"
 
         return time_string
-
 
     def format_date(self, date_int):
         t1=time.localtime(date_int)
@@ -88,8 +94,6 @@ class FeedItem():
             while len(date_string) < 6:
                 date_string += " "
             return date_string
-
-
 
 class Account():
 
@@ -206,6 +210,23 @@ class Account():
             except:
                 return "Error Reaching Feedbin Server"
 
+    def validate_data(self, item):
+        feed_items = []
+        if '\n' in item['title']:
+            title = ""
+            titles = item['title'].splitlines()
+            for piece in titles:
+                title += piece + " "
+            item['title'] = title
+
+        if item['url'] is None:
+            item['url'] = "No Item URL"
+
+        if item['author'] is None:
+            item['author'] = "--"
+
+        return item
+
     def process_data(self, data):
         if self.service == "Feed Wrangler":
             if data['error']:
@@ -213,24 +234,19 @@ class Account():
             else:
                 feed_items = []
                 for item in data['feed_items']:
-                    if '\n' in item['title']:
-                        title = ""
-                        titles = item['title'].splitlines()
-                        for piece in titles:
-                            title += piece + " "
-                        item['title'] = title
-                    feed_items.append(FeedItem(item['feed_item_id'],
-                                               item['published_at'],
-                                               item['created_at'],
-                                               item['url'],
-                                               item['title'],
-                                               item['starred'],
-                                               item['read'],
-                                               item['body'],
-                                               item['author'],
-                                               item['feed_id'],
-                                               item['feed_name'],
-                                               self.service))
+                    item = self.validate_data(item)                  
+                    feed_items.append(FeedItem(feed_item_id = item['feed_item_id'],
+                            published_at = item['published_at'],
+                            created_at = item['created_at'],
+                            title = item['title'],
+                            starred = item['starred'],
+                            read = item['read'],
+                            body = item['body'],
+                            author = item['author'],
+                            feed_id = item['feed_id'],
+                            feed_title = item['feed_name'],
+                            url = item['url'],
+                            service = self.service))
                 if len(data['feed_items']) is 0:
                     feed_items.append(FeedItem(0,
                                                0,
@@ -254,18 +270,10 @@ class Account():
             starred_ids = json.loads(ret.text)
 
             for item in data:
+                item = self.validate_data(item)
                 for feed in self.feeds:
                     if item['feed_id'] == feed.feed_id:
                         feed_name = feed.title
-
-                if item['id'] in starred_ids:
-                    starred = True
-                if '\n' in item['title']:
-                    title = ""
-                    titles = item['title'].splitlines()
-                    for piece in titles:
-                        title += piece + " "
-                    item['title'] = title
 
                 pubdate = item['published'].split("T")
                 pub = pubdate[0] + " " + pubdate[1]

@@ -22,8 +22,8 @@ You can check the todo list for features to be added
 ** Feed Wrangler
 My service of choice and the easiest API to impliment
 
-** Feed Bin 
-Coming Soon
+** Feedbin 
+Another nice RSS service
 
 ** Newsblur 
 Coming Soon

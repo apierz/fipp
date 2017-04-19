@@ -1,4 +1,5 @@
 account_info.txt
+completer.hist
 curses-tutorial.py
 *.pyc
 feed-lister.py

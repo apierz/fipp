@@ -10,6 +10,8 @@ import urllib.request
 import json
 from pathlib import Path
 import pickle
+import requests
+from requests import session
 
 class Feed():
     def __init__(self, title, feed_id, feed_url, site_url, account):
@@ -20,9 +22,10 @@ class Feed():
         self.account = account
 
 class FeedItem():
-    def __init__(self, feed_item_id, published_at, created_at,
-                     url, title, starred, read, body, author,
-                     feed_id, feed_title, service):
+    def __init__(self, feed_item_id = 0, published_at = 0, created_at = 0,
+                     url = "", title = "", starred = False,
+                     read = True, body = "", author = "",
+                     feed_id = "", feed_title = "", service = ""):
         self.feed_item_id = feed_item_id
         self.published_at = published_at
         self.created_at = created_at
@@ -30,7 +33,7 @@ class FeedItem():
         self.title = title.rstrip()
         self.starred = starred
         self.read = read
-        self.body = "<url>" + self.url + "</url></p>" + body
+        self.body = "<url>" + url + "</url></p>" + body
         self.author = author
         self.feed_id = feed_id
         self.feed_title = feed_title
@@ -60,7 +63,7 @@ class FeedItem():
         time_string = "| " + str(t1.tm_hour) + ":" + min_string + " " + str(t1.tm_mon) + "/" + str(t1.tm_mday) + " |"
 
         return time_string
-        
+
 
     def format_date(self, date_int):
         t1=time.localtime(date_int)
@@ -87,6 +90,7 @@ class FeedItem():
             return date_string
 
 
+
 class Account():
 
     global FW_API_URL
@@ -94,8 +98,9 @@ class Account():
     global FW_CLIENT_KEY
     FW_CLIENT_KEY = "77037deda1050eff59d9619d4d2f4fd4"
 
-    global FB_API_URl
-    FB_API_URl = "https://api.feedbin.com/v2/"
+    global FB_API_URL
+    FB_API_URL = "https://api.feedbin.com/v2/"
+    global head
     head = { "Content-Type": "application/json; charset=utf-8"}
 
     def __init__(self, username = "", password = "", service = "", key = "",
@@ -164,17 +169,16 @@ class Account():
         if self.service == "Feedbin":
             try:
                 payload = {"feed_url": url}
-                ret = self.key.post(FB_API_URl + "subscriptions.json",
+                ret = self.key.post(FB_API_URL + "subscriptions.json",
                                   data = json.dumps(payload),
                                   headers = head,
                                   auth=(self.username, self.password))
-                if ret.status_code is 403:
-                    return "Error Reaching Feedbin Server"
+                if ret.status_code is 404:
+                    return "No feed found"
                 else:
                     return True
             except:
                 return "Error Reaching Feedbin Server"
-                
 
     def remove_feed(self, feed_id):
         if self.service == "Feed Wrangler":
@@ -189,7 +193,18 @@ class Account():
                 else:
                     return True
             except:
-                return "Error reaching server"
+                return "Error Reaching Feed Wrangler Server"
+        if self.service == "Feedbin":
+            try:
+                ret = self.key.post(FB_API_URL + "subscriptions/" + feed_id + ".json",
+                                  headers = head,
+                                  auth=(self.username, self.password))
+                if ret.status_code is 403:
+                    return "Cant delete feed"
+                else:
+                    return True
+            except:
+                return "Error Reaching Feedbin Server"
 
     def process_data(self, data):
         if self.service == "Feed Wrangler":
@@ -205,31 +220,89 @@ class Account():
                             title += piece + " "
                         item['title'] = title
                     feed_items.append(FeedItem(item['feed_item_id'],
-                                                item['published_at'],
-                                                item['created_at'],
-                                                item['url'],
-                                                item['title'],
-                                                item['starred'],
-                                                item['read'],
-                                                item['body'],
-                                                item['author'],
-                                                item['feed_id'],
-                                                item['feed_name'],
-                                                self.service))
+                                               item['published_at'],
+                                               item['created_at'],
+                                               item['url'],
+                                               item['title'],
+                                               item['starred'],
+                                               item['read'],
+                                               item['body'],
+                                               item['author'],
+                                               item['feed_id'],
+                                               item['feed_name'],
+                                               self.service))
                 if len(data['feed_items']) is 0:
                     feed_items.append(FeedItem(0,
                                                0,
-                                                0,
-                                                "none",
-                                                "no items",
-                                                False,
-                                                False,
-                                                "None",
-                                                "None",
-                                                0,
-                                                " ",
-                                                self.service))
+                                               0,
+                                               "none",
+                                               "no items",
+                                               False,
+                                               False,
+                                               "None",
+                                               "None",
+                                               0,
+                                               " ",
+                                               self.service))
                 return feed_items
+        if self.service == "Feedbin":
+            feed_items = []
+            starred = False
+            feed_name = ""
+
+            ret = self.key.get("https://api.feedbin.com/v2/starred_entries.json", auth=(self.username, self.password))
+            starred_ids = json.loads(ret.text)
+
+            for item in data:
+                for feed in self.feeds:
+                    if item['feed_id'] == feed.feed_id:
+                        feed_name = feed.title
+
+                if item['id'] in starred_ids:
+                    starred = True
+                if '\n' in item['title']:
+                    title = ""
+                    titles = item['title'].splitlines()
+                    for piece in titles:
+                        title += piece + " "
+                    item['title'] = title
+
+                pubdate = item['published'].split("T")
+                pub = pubdate[0] + " " + pubdate[1]
+                pub = pub[:-2]
+
+                epoch = datetime.datetime.strptime(pub, "%Y-%m-%d %H:%M:%S.%f")
+                seconds = time.mktime(epoch.timetuple())
+
+                feed_items.append(FeedItem(item['id'],
+                                            seconds,
+                                            item['created_at'],
+                                            item['url'],
+                                            item['title'],
+                                            starred,
+                                            False,
+                                            item['content'],
+                                            item['author'],
+                                            item['feed_id'],
+                                            feed_name,
+                                            self.service))
+                starred = False
+            if len(data) is 0:
+                feed_items.append(FeedItem(0,
+                                            0,
+                                            0,
+                                            "none",
+                                            "no items",
+                                            False,
+                                            False,
+                                            "None",
+                                            "None",
+                                            0,
+                                            " ",
+                                            self.service))
+            feed_items = sorted(feed_items, key=lambda FeedItem: FeedItem.published_at, reverse=True)
+            return feed_items
+            
 
     def get_starred_items(self):
         try:
@@ -241,6 +314,25 @@ class Account():
                     return data['error']
                 else:
                     return self.process_data(data)
+                
+            if self.service == "Feedbin":
+                ret = s.get("https://api.feedbin.com/v2/starred_entries.json", auth=(self.username, self.password))
+                starred_ids = json.loads(ret.text)
+
+                idstring = ""
+                for idnum in starred:
+                    idstring += str(idnum) + ","
+                idstring = idstring[:-1]
+
+                ret = self.key.get(FB_API_URL + "entries.json?ids=" + idstring,
+                                  headers = head,
+                                  auth=(self.username, self.password))
+                data = json.loads(ret.text)
+                if ret.status_code is 404:
+                    return "No feed found"
+                else:
+                    return self.process_data(data)
+                
         except:
             return "Error reaching server"
 
@@ -256,11 +348,22 @@ class Account():
                     return data['error']
                 else:
                     return self.process_data(data)
+
+            if self.service == "Feedbin":
+                ret = self.key.get(FB_API_URL + "/feeds/" + str(feed.feed_id) + "/entries.json?page=1&per_page=25",
+                                  headers = head,
+                                  auth=(self.username, self.password))
+                data = json.loads(ret.text)
+                if ret.status_code is 404:
+                    return "No feed found"
+                else:
+                    return self.process_data(data)
+
         except:
             return "Error reaching server"
 
     def get_unread_items(self):
-        try:
+        # try:
             if self.service == "Feed Wrangler":
                 response = urllib.request.urlopen(FW_API_URL + "/feed_items/list?access_token=" +
                                                         self.key + "&read=false").read()
@@ -269,8 +372,27 @@ class Account():
                     return data['error']
                 else:
                     return self.process_data(data)
-        except:
-            return "Error reaching server"
+
+            if self.service == "Feedbin":
+                ret = self.key.get(FB_API_URL + "unread_entries.json", auth=(self.username, self.password))
+                unread = json.loads(ret.text)
+                idstring = ""
+                for idnum in unread:
+                    idstring += str(idnum) + ","
+                idstring = idstring[:-1]
+
+                ret = self.key.get(FB_API_URL + "entries.json?ids=" + idstring,
+                                  headers = head,
+                                  auth=(self.username, self.password))
+                data = json.loads(ret.text)
+
+                if ret.status_code is 404:
+                    return "Can't Download Items"
+                else:
+                    return self.process_data(data)
+
+        # except:
+            # return "Error Reaching server"
 
     def save_user_info(self):
         outFile = open("user_info", "wb")
@@ -287,7 +409,7 @@ class Account():
             f.close()
             service = uaccount.service
 
-            if service == "Feed Wrangler":
+            if service == "Feed Wrangler" or service == "Feedbin":
                 return uaccount
             else:
                 f.close()
@@ -316,6 +438,25 @@ class Account():
                         self.save_user_info()
             except:
                 return "Error reaching server"
+        if self.service == "Feedbin":
+            try:
+                ret = self.key.get(FB_API_URL + "subscriptions.json", auth=(self.username, self.password))
+                if ret.status_code != 200:
+                    return "Error loading feeds"
+                else:
+                    self.feeds = []
+                    data =json.loads(ret.text)
+                    for feed in data:
+                        feed_sub = Feed(feed['title'],
+                                                feed['feed_id'],
+                                                feed['feed_url'],
+                                                feed['site_url'],
+                                                self)
+                    self.feeds.append(feed_sub)
+
+                    self.save_user_info()
+            except:
+                return "Error Reaching Feedbin Server"
 
     def change_star_status(self, item_id, status):
        if self.service == "Feed Wrangler":
@@ -328,6 +469,24 @@ class Account():
                return data['error']
            else:
                return True
+
+       if self.service == "Feedbin":
+           try:
+               if status is False:
+                   payload ={"unread_entries" : item_id }
+                   ret = self.key.delete(FB_API_URL + "/starred_entries.json",
+                                                       headers = head,
+                                                       data = json.dumps(payload),
+                                                       auth=(self.username, self.password))
+               if status is True:
+                   payload ={"unread_entries" : item_id }
+                   ret = self.key.post(FB_API_URL + "/starred_entries.json",
+                                                       headers = head,
+                                                       data = json.dumps(payload),
+                                                       auth=(self.username, self.password))
+           except:
+               return "Error reaching server"
+
 
     def change_read_status(self, item_id, status):
         if self.service == "Feed Wrangler":
@@ -344,3 +503,21 @@ class Account():
                     return True
             except:
                 return "Error reaching server"
+
+        if self.service == "Feedbin":
+            try:
+                if status is True:
+                    payload ={"unread_entries" : item_id }
+                    ret = self.key.delete(FB_API_URL + "/unread_entries.json",
+                                                        headers = head,
+                                                        data = json.dumps(payload),
+                                                        auth=(self.username, self.password))
+                if status is False:
+                    payload ={"unread_entries" : item_id }
+                    ret = self.key.post(FB_API_URL + "/unread_entries.json",
+                                                        headers = head,
+                                                        data = json.dumps(payload),
+                                                        auth=(self.username, self.password))
+
+            except:
+                return "Error Setting Read Status (r to refresh)"

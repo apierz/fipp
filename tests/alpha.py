@@ -320,11 +320,12 @@ def display_feed_body(feed_item):
             break  # Exit the while loop
     return -999
 
-
 class FeedItem():
-    def __init__(self, title, body, pub_date, read, starred,
-                     feed_item_id, url, author, feed_id, feed_name,
-                     updated_at, item_count, account):
+    def __init__(self, title = "", body = "", pub_date = 0, read = False,
+                     starred = False,
+                     feed_item_id = 0, url = "", author = "",
+                     feed_id = 0, feed_name = "",
+                     updated_at = 0, item_count = 0, account = ""):
         self.title = title.strip().replace("\t", "").replace("\n","")
         self.body = body
         self.pub_date = pub_date

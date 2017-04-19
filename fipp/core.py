@@ -16,7 +16,7 @@ curses.curs_set(0)
 
 def add_account(account):
 
-    account_view_info = [["Service", "Feed Wrangler", "Feed Bin"], ["Username", " "], ["Password", " "], "Verify Account"]
+    account_view_info = [["Service", "Feed Wrangler", "Feedbin"], ["Username", " "], ["Password", " "], "Verify Account"]
 
     if account is not False:
         account_view = CFLV_con(stdscr, account_view_info,
@@ -535,10 +535,11 @@ def main(stdscr):
         account = add_account(account)
 
     result = unread_items = account.get_unread_items()
+    item_headers = []
     if type(result) is str:
         bottom_string = result
         error_flag = True
-        item_headers = [""]
+        item_headers.append("")
     else:
         for item in unread_items:
             item_headers.append(item.get_header_string())

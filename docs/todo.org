@@ -22,30 +22,31 @@
    - [X] show read status in bottom bar
    - [X] add date of publication to bottom bar
 
-
-* ONDECK content view controller [1/4]
+* CV_con
+- [ ] add bright color support
+** ONDECK content view controller [1/4]
 - [ ] loading indicators
 - [ ] dynamic content width
 - [ ] scrolling bars
 - [X] scroll pos indicators
-** DONE horizontal scrolling [2/2]
-   - [X] controls & logic 
-   - [X] scrolling indicators
-** DONE html parser [7/7]
-   - [X] tables
-   - [X] links
-   - [X] code
-   - [X] underline
-   - [X] strikeout
-   - [X] inline quotation
-   - [X] imgs & alt text
-* Dynamic List view controller
-** DONE dynamizism [3/3]
+*** DONE horizontal scrolling [2/2]
+    - [X] controls & logic 
+    - [X] scrolling indicators
+*** DONE html parser [7/7]
+    - [X] tables
+    - [X] links
+    - [X] code
+    - [X] underline
+    - [X] strikeout
+    - [X] inline quotation
+    - [X] imgs & alt text
+** Dynamic List view controller
+*** DONE dynamizism [3/3]
 - [X] add
 - [X] insert
 - [X] del
 
-* SOMEDAY Static List view controller
+** SOMEDAY Static List view controller
 - [ ] fix resize during text entry event
   
 * account

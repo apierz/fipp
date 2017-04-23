@@ -1,4 +1,5 @@
 import curses
+import pickle
 from curses import wrapper
 import locale
 import os
@@ -12,6 +13,8 @@ from pathlib import Path
 import pickle
 import requests
 from requests import session
+from Crypto.Cipher import XOR
+import base64
 
 class Feed():
     def __init__(self, title, feed_id, feed_url, site_url, account):
@@ -110,7 +113,8 @@ class Account():
     def __init__(self, username = "", password = "", service = "", key = "",
                      bf_col = 7, bb_col = 0, mf_col = 0, mb_col = 7,
                      hf_col = 7, hb_col = 3, tf_col = 7, tb_col = 4,
-                     sf_col = 4, sb_col = 0):
+                     sf_col = 4, sb_col = 0,
+                     fipp_pw = "toomanysecrets"):
         
         self.bf_col = bf_col
         self.bb_col = bb_col
@@ -128,6 +132,7 @@ class Account():
         self.username = username
         self.password = password
         self.key = key
+        self.fipp_pw = fipp_pw
         self.feeds = []
 
         if service == "Feed Wrangler":
@@ -399,10 +404,17 @@ class Account():
                 else:
                     return self.process_data(data)
 
-        # except:
-            # return "Error Reaching server"
+    def encrypt(self, key, plaintext):
+        cipher = XOR.new(key)
+        return base64.b64encode(cipher.encrypt(plaintext))
+
+    def decrypt(self, key, ciphertext):
+        cipher = XOR.new(key)
+        return cipher.decrypt(base64.b64decode(ciphertext))
+
 
     def save_user_info(self):
+        self.password = self.encrypt(self.fipp_pw, self.password)
         outFile = open("user_info", "wb")
         pickle.dump(self, outFile)
         outFile.close()
@@ -413,6 +425,7 @@ class Account():
             f = open("user_info", "rb")
             data = f.read()
             uaccount = pickle.loads(data)
+            uaccount.password = self.decrypt(self.fipp_pw, uaccount.password).decode("utf-8")
             uaccount.load_feeds()
             f.close()
             service = uaccount.service

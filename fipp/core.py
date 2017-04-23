@@ -637,6 +637,7 @@ def main(stdscr):
                 else:
                     unread_items[item_list_view.highlight_pos].read = read
                     read_mod = True
+                    item_list_view.scrolldown_list()
             elif c == ord('s'):
                 starred = None
                 if unread_items[item_list_view.highlight_pos].starred is True:

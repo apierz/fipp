@@ -50,11 +50,11 @@
 - [ ] fix resize during text entry event
   
 * account
-** user data protection
-   - [ ] look into encrypting file, or encrypting pickle
+** DONE user data protection
+   - [X] look into encrypting file, or encrypting pickle
 https://pypi.python.org/pypi/EncryptedPickle/0.1.4
 ** DONE add feedwrangler 
 - [X] error handling
 ** DONE add feedbin
-** add newsblur
+** CURRENT add newsblur
 ** add feedly

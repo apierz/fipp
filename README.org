@@ -2,9 +2,9 @@
 
 *Fipp* is a Feed Interface Poorly written in Python3 with a curses UI. It is inspired by my love of Mutt, the terminal email client.
 
-Fipp is designed to work with online RSS feed tracking services, rather than manage subscriptions itself. This is so your changes propegate accross all your devices.
+Fipp is designed to work with online RSS feed tracking services, rather than manage subscriptions itself. This is so your changes propagate across all your devices.
 
-Fipp is currently in alpha so it is quite buggy and also stores your password in essesntially plaintext. 
+Fipp is currently in alpha so it is quite buggy, any bug reports would be greatly appreciated.
 
 * Screenshots
 [[Main Screen][https://github.com/apierz/fipp/blob/master/screenshots/mainscreen.png?raw=true]]
@@ -20,13 +20,14 @@ You can check the todo list for features to be added
 * Service Support
 
 ** Feed Wrangler
-My service of choice and the easiest API to impliment
 
 ** Feedbin 
-Another nice RSS service
 
 ** Newsblur 
-Coming Soon
+In Progress
 
 ** Feedly
 Stopped giving out API keys, will add when they start again
+
+** Fever
+Investigating

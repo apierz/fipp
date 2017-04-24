@@ -16,7 +16,7 @@ curses.curs_set(0)
 
 def add_account(account):
 
-    account_view_info = [["Service", "Feed Wrangler", "Feedbin"], ["Username", " "], ["Password", " "], "Verify Account"]
+    account_view_info = [["Service", "Feed Wrangler", "Feedbin", "NewsBlur"], ["Username", " "], ["Password", " "], "Verify Account"]
 
     if account is not False:
         account_view = CFLV_con(stdscr, account_view_info,
@@ -233,7 +233,7 @@ def display_item_body(pos, content, unread_items, account):
                                           unread_items[pos].author)
 
     #attempt to update read status
-    result = account.change_read_status(unread_items[pos].feed_item_id, True)
+    result = account.change_read_status(unread_items[pos], True)
     error = False
 
     if type(result) is str:
@@ -285,7 +285,7 @@ def display_item_body(pos, content, unread_items, account):
             else:
                 read = True
                 unread_items[pos].read = True
-            account.change_read_status(unread_items[pos].feed_item_id, read)
+            account.change_read_status(unread_items[pos], read)
         elif c == ord('s'):
             starred = None
             if unread_items[pos].starred is True:
@@ -294,7 +294,8 @@ def display_item_body(pos, content, unread_items, account):
             else:
                 starred = True
                 unread_items[pos].starred = True
-            account.change_star_status(unread_items[pos].feed_item_id, starred)
+            account.change_star_status(unread_items[pos].feed_item_id, starred,
+                                           unread_items[pos].feed_id)
         elif c == ord('n'):
             return 1
         elif c == ord('p'):
@@ -466,7 +467,7 @@ def display_feed_items(items, account):
             else:
                 read = True
                 unread_count -= 1
-            result = account.change_read_status(items[item_list_view.highlight_pos].feed_item_id, read)
+            result = account.change_read_status(items[item_list_view.highlight_pos], read)
             if type(result) is str:
                     feed_list_view.bottom_bar.bar_content = result
                     feed_list_view.bottom_bar.update_bar()
@@ -482,7 +483,7 @@ def display_feed_items(items, account):
                 starred = False
             else:
                 starred = True
-            result = account.change_star_status(items[item_list_view.highlight_pos].feed_item_id, starred)
+            result = account.change_star_status(items[item_list_view.highlight_pos].feed_item_id, starred, items[item_list_view.highlight_pos].feed_id)
             if type(result) is str:
                     feed_list_view.bottom_bar.bar_content = result
                     feed_list_view.bottom_bar.update_bar()
@@ -630,7 +631,7 @@ def main(stdscr):
                     read = False
                 else:
                     read = True
-                result = account.change_read_status(unread_items[item_list_view.highlight_pos].feed_item_id, read)
+                result = account.change_read_status(unread_items[item_list_view.highlight_pos], read)
                 if type(result) is str:
                     bottom_string = result
                     error_flag = True
@@ -644,7 +645,7 @@ def main(stdscr):
                     starred = False
                 else:
                     starred = True
-                result = account.change_star_status(unread_items[item_list_view.highlight_pos].feed_item_id, starred)
+                result = account.change_star_status(unread_items[item_list_view.highlight_pos].feed_item_id, starred, unread_items[item_list_view.highlight_pos].feed_id)
                 if type(result) is str:
                     bottom_string = result
                     error_flag = True

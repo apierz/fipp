@@ -28,7 +28,8 @@ class FeedItem():
     def __init__(self, feed_item_id = 0, published_at = 0, created_at = 0,
                      url = "", title = "", starred = False,
                      read = True, body = "", author = "",
-                     feed_id = "", feed_title = "", service = ""):
+                     feed_id = "", feed_title = "", service = "",
+                     story_hash = ""):
         self.feed_item_id = feed_item_id
         self.published_at = published_at
         self.created_at = created_at
@@ -41,6 +42,7 @@ class FeedItem():
         self.feed_id = feed_id
         self.feed_title = feed_title
         self.service = service
+        self.story_hash = story_hash
 
     def get_header_string(self):
         header_string = ""
@@ -110,6 +112,9 @@ class Account():
     global head
     head = { "Content-Type": "application/json; charset=utf-8"}
 
+    global NB_API_URL
+    NB_API_URL = "https://www.newsblur.com/"
+
     def __init__(self, username = "", password = "", service = "", key = "",
                      bf_col = 7, bb_col = 0, mf_col = 0, mb_col = 7,
                      hf_col = 7, hb_col = 3, tf_col = 7, tb_col = 4,
@@ -159,6 +164,16 @@ class Account():
                 self.save_user_info()
             self.load_feeds()
 
+        if service == "NewsBlur":
+            s = requests.Session()
+            payload = {"username" : self.username, "password" : password}
+            ret = s.get(NB_API_URL + "api/login", data = payload)
+            if ret.status_code is not 200:
+                pass
+            else:
+                self.key = s
+                self.save_user_info()
+            self.load_feeds()
 
     def add_feed(self, url):
         if self.service == "Feed Wrangler":
@@ -189,6 +204,18 @@ class Account():
             except:
                 return "Error Reaching Feedbin Server"
 
+        if service == "NewsBlur":
+            try:
+                payload = {"url" : url}
+                ret = self.key.get(NB_API_URL + "reader/add_url", data = payload)
+                if ret.status_code is not 200:
+                    return "No feed found"
+                else:
+                    return True
+            except:
+                return "Error Reaching Newsblur Server"
+            
+
     def remove_feed(self, feed_id):
         if self.service == "Feed Wrangler":
             try:
@@ -215,6 +242,18 @@ class Account():
             except:
                 return "Error Reaching Feedbin Server"
 
+        if service == "NewsBlur":
+            try:
+                payload = {"feed_id" : feed_id}
+                ret = self.key.get(NB_API_URL + "reader/delete_url", data = payload)
+                if ret.status_code is not 200:
+                    return "No feed found"
+                else:
+                    return True
+            except:
+                return "Error Reaching Newsblur Server"
+
+
     def validate_data(self, item):
         feed_items = []
         if '\n' in item['title']:
@@ -229,6 +268,9 @@ class Account():
 
         if item['author'] is None:
             item['author'] = "--"
+
+        if item['starred'] is None:
+            item['starred'] = False
 
         return item
 
@@ -271,9 +313,6 @@ class Account():
             starred = False
             feed_name = ""
 
-            ret = self.key.get("https://api.feedbin.com/v2/starred_entries.json", auth=(self.username, self.password))
-            starred_ids = json.loads(ret.text)
-
             for item in data:
                 item = self.validate_data(item)
                 for feed in self.feeds:
@@ -286,7 +325,7 @@ class Account():
 
                 epoch = datetime.datetime.strptime(pub, "%Y-%m-%d %H:%M:%S.%f")
                 seconds = time.mktime(epoch.timetuple())
-
+                
                 feed_items.append(FeedItem(item['id'],
                                             seconds,
                                             item['created_at'],
@@ -296,9 +335,10 @@ class Account():
                                             False,
                                             item['content'],
                                             item['author'],
-                                            item['feed_id'],
+                                            item['story_feed_id'],
                                             feed_name,
                                             self.service))
+
                 starred = False
             if len(data) is 0:
                 feed_items.append(FeedItem(0,
@@ -315,7 +355,46 @@ class Account():
                                             self.service))
             feed_items = sorted(feed_items, key=lambda FeedItem: FeedItem.published_at, reverse=True)
             return feed_items
+
+        if self.service == "NewsBlur":
+            feed_items = []
+            feed_name = ""
             
+            for item in data['stories']:
+                item = self.validate_data(item)
+                for feed in self.feeds:
+                    if item['story_feed_id'] == feed.feed_id:
+                        feed_name = feed.title
+
+                feed_items.append(FeedItem(item['id'],
+                                            item['story_timestamp'],
+                                            item['story_timestamp'],
+                                            item['story_permalink'],
+                                            item['story_title'],
+                                            item['starred'],
+                                            False,
+                                            item['story_content'],
+                                            item['story_authors'],
+                                            item['feed_id'],
+                                            feed_name,
+                                            self.service),
+                                            item['story_hash'])
+
+            if len(data) is 0:
+                feed_items.append(FeedItem(0,
+                                            0,
+                                            0,
+                                            "none",
+                                            "no items",
+                                            False,
+                                            False,
+                                            "None",
+                                            "None",
+                                            0,
+                                            " ",
+                                            self.service))
+            feed_items = sorted(feed_items, key=lambda FeedItem: FeedItem.published_at, reverse=True)
+            return feed_items
 
     def get_starred_items(self):
         try:
@@ -342,9 +421,20 @@ class Account():
                                   auth=(self.username, self.password))
                 data = json.loads(ret.text)
                 if ret.status_code is 404:
-                    return "No feed found"
+                    return "No Starred Items Found"
                 else:
                     return self.process_data(data)
+
+            if self.service == "NewsBlur":
+                try:
+                    ret = self.key.get(NB_API_URL + "reader/starred_stories")
+                    data = json.loads(ret.json())
+                    if ret.status_code is not 200:
+                        return "No feed found"
+                    else:
+                        return self.process_data(data)
+                except:
+                    return "No Starred Items Found"
                 
         except:
             return "Error reaching server"
@@ -371,6 +461,18 @@ class Account():
                     return "No feed found"
                 else:
                     return self.process_data(data)
+
+            if self.service == "NewsBlur":
+                try:
+                    ret = self.key.get(NB_API_URL + "reader/feed/" + str(feed.feed_id))
+                    data = json.loads(ret.json())
+                    if ret.status_code is not 200:
+                        return "No feed found"
+                    else:
+                        return self.process_data(data)
+                except:
+                    return "No Starred Items Found"
+
 
         except:
             return "Error reaching server"
@@ -404,6 +506,21 @@ class Account():
                 else:
                     return self.process_data(data)
 
+            if self.service == "NewsBlur":
+                payload = {"read_filter" : "unread", "order" : "newest"}
+                try:
+                    ret = self.key.get(NB_API_URL + "reader/river_stories", data = payload)
+                    data = json.loads(ret)
+
+                    if ret.status_code is not 200:
+                        return "Can't Download Items"
+                    else:
+                        return self.process_data(data)
+                    
+                except:
+                    return "No feed items founds"
+
+
     def encrypt(self, key, plaintext):
         cipher = XOR.new(key)
         return base64.b64encode(cipher.encrypt(plaintext))
@@ -430,7 +547,7 @@ class Account():
             f.close()
             service = uaccount.service
 
-            if service == "Feed Wrangler" or service == "Feedbin":
+            if service == "Feed Wrangler" or service == "Feedbin" or service == "NewsBlur":
                 return uaccount
             else:
                 f.close()
@@ -479,7 +596,25 @@ class Account():
             except:
                 return "Error Reaching Feedbin Server"
 
-    def change_star_status(self, item_id, status):
+        if self.service == "NewsBlur":
+            try:
+                payload = {"flat" : True}
+                ret = s.get("http://www.newsblur.com/reader/feeds", data = payload)
+                data = json.loads(ret)
+                for feed in data:
+                    feed_sub = Feed(feed['feed_title'],
+                                    feed['id'],
+                                    feed['feed_address'],
+                                    feed['feed_link'],
+                                    self)
+                    self.feeds.append(feed_sub)
+
+                    self.save_user_info()  
+            except:
+                return "Error Reaching NewsBlur Server"
+
+
+    def change_star_status(self, item_id, status, feed_id):
        if self.service == "Feed Wrangler":
            response = urllib.request.urlopen(FW_API_URL + "feed_items/update?access_token=" +
                                                 self.key + "&feed_item_id=" +
@@ -494,13 +629,13 @@ class Account():
        if self.service == "Feedbin":
            try:
                if status is False:
-                   payload ={"unread_entries" : item_id }
+                   payload ={"starred_entries" : item_id }
                    ret = self.key.delete(FB_API_URL + "/starred_entries.json",
                                                        headers = head,
                                                        data = json.dumps(payload),
                                                        auth=(self.username, self.password))
                if status is True:
-                   payload ={"unread_entries" : item_id }
+                   payload ={"starred_entries" : item_id }
                    ret = self.key.post(FB_API_URL + "/starred_entries.json",
                                                        headers = head,
                                                        data = json.dumps(payload),
@@ -508,13 +643,25 @@ class Account():
            except:
                return "Error reaching server"
 
+       if self.service == "NewsBlur":
+            try:
+                if status is True:
+                    payload = {'story_id':item_id, 'feed_id':feed_id}
+                    ret = self.key.post(NB_API_URL + "/reader/mark_story_as_starred",
+                                            data = payload)
+                if status is False:
+                    payload = {'story_id':item_id, 'feed_id':feed_id}
+                    ret = self.key.post(NB_API_URL + "/reader/mark_story_as_unstarred",
+                                            data = payload)
+            except:
+                return "Error reaching server"
 
-    def change_read_status(self, item_id, status):
+    def change_read_status(self, item, status):
         if self.service == "Feed Wrangler":
             try:
                 response = urllib.request.urlopen(FW_API_URL + "feed_items/update?access_token=" +
                                                     self.key + "&feed_item_id=" +
-                                                    str(item_id) + "&read=" +
+                                                    str(item.item_id) + "&read=" +
                                                     str(status).lower()).read()
 
                 data = json.loads(response.decode())
@@ -528,17 +675,30 @@ class Account():
         if self.service == "Feedbin":
             try:
                 if status is True:
-                    payload ={"unread_entries" : item_id }
+                    payload ={"unread_entries" : item.item_id }
                     ret = self.key.delete(FB_API_URL + "/unread_entries.json",
                                                         headers = head,
                                                         data = json.dumps(payload),
                                                         auth=(self.username, self.password))
                 if status is False:
-                    payload ={"unread_entries" : item_id }
+                    payload ={"unread_entries" : item.item_id }
                     ret = self.key.post(FB_API_URL + "/unread_entries.json",
                                                         headers = head,
                                                         data = json.dumps(payload),
                                                         auth=(self.username, self.password))
 
+            except:
+                return "Error Setting Read Status (r to refresh)"
+            
+        if self.service == "NewsBlur":
+            try:
+                if status is True:
+                    payload = {'story_hash':item.story_hash}
+                    ret = self.key.post(NB_API_URL + "/reader/mark_story_hashes_as_read",
+                                            data = payload)
+                if status is False:
+                    payload = {'story_has':item.story_hash}
+                    ret = self.key.post(NB_API_URL + "/reader/mark_story_hashes_as_unread",
+                                            data = payload)
             except:
                 return "Error Setting Read Status (r to refresh)"

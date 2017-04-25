@@ -119,7 +119,7 @@ class Account():
                      bf_col = 7, bb_col = 0, mf_col = 0, mb_col = 7,
                      hf_col = 7, hb_col = 3, tf_col = 7, tb_col = 4,
                      sf_col = 4, sb_col = 0,
-                     fipp_pw = "toomanysecrets"):
+                     fipp_pw = "toomanysecrets", user_id = ""):
         
         self.bf_col = bf_col
         self.bb_col = bb_col
@@ -138,6 +138,7 @@ class Account():
         self.password = password
         self.key = key
         self.fipp_pw = fipp_pw
+        self.user_id = user_id
         self.feeds = []
 
         if service == "Feed Wrangler":
@@ -149,10 +150,8 @@ class Account():
                 pass
             else:
                 self.key = data['access_token']
+                self.load_feeds()
                 self.save_user_info()
-            self.load_feeds()
-
-            self.save_user_info()
 
         if service == "Feedbin":
             s = requests.Session()
@@ -161,19 +160,21 @@ class Account():
                 pass
             else:
                 self.key = s
+                self.load_feeds()
                 self.save_user_info()
-            self.load_feeds()
 
         if service == "NewsBlur":
             s = requests.Session()
             payload = {"username" : self.username, "password" : password}
-            ret = s.get(NB_API_URL + "api/login", data = payload)
-            if ret.status_code is not 200:
+            ret = s.post(NB_API_URL + "api/login", data = payload)
+            data = json.loads(ret.text)
+            if ret.status_code != 200:
                 pass
             else:
                 self.key = s
+                self.user_id = str(data['user_id'])
+                self.load_feeds()
                 self.save_user_info()
-            self.load_feeds()
 
     def add_feed(self, url):
         if self.service == "Feed Wrangler":
@@ -204,7 +205,7 @@ class Account():
             except:
                 return "Error Reaching Feedbin Server"
 
-        if service == "NewsBlur":
+        if self.service == "NewsBlur":
             try:
                 payload = {"url" : url}
                 ret = self.key.get(NB_API_URL + "reader/add_url", data = payload)
@@ -242,7 +243,7 @@ class Account():
             except:
                 return "Error Reaching Feedbin Server"
 
-        if service == "NewsBlur":
+        if self.service == "NewsBlur":
             try:
                 payload = {"feed_id" : feed_id}
                 ret = self.key.get(NB_API_URL + "reader/delete_url", data = payload)
@@ -255,7 +256,6 @@ class Account():
 
 
     def validate_data(self, item):
-        feed_items = []
         if '\n' in item['title']:
             title = ""
             titles = item['title'].splitlines()
@@ -269,8 +269,9 @@ class Account():
         if item['author'] is None:
             item['author'] = "--"
 
-        if item['starred'] is None:
+        if 'starred' not in item:
             item['starred'] = False
+
 
         return item
 
@@ -308,16 +309,28 @@ class Account():
                                                " ",
                                                self.service))
                 return feed_items
+
         if self.service == "Feedbin":
             feed_items = []
             starred = False
+            read = False
             feed_name = ""
+
+            ret = self.key.get(FB_API_URL + "unread_entries.json",
+                                   auth=(self.username, self.password),
+                                   headers=head)
+            unread = json.loads(ret.text)
 
             for item in data:
                 item = self.validate_data(item)
                 for feed in self.feeds:
                     if item['feed_id'] == feed.feed_id:
                         feed_name = feed.title
+
+                for ur in unread:
+                    if ur == item['id']:
+                        read = False
+                        break
 
                 pubdate = item['published'].split("T")
                 pub = pubdate[0] + " " + pubdate[1]
@@ -332,14 +345,15 @@ class Account():
                                             item['url'],
                                             item['title'],
                                             starred,
-                                            False,
+                                            read,
                                             item['content'],
                                             item['author'],
-                                            item['story_feed_id'],
+                                            item['feed_id'],
                                             feed_name,
                                             self.service))
 
                 starred = False
+                read = False
             if len(data) is 0:
                 feed_items.append(FeedItem(0,
                                             0,
@@ -360,25 +374,38 @@ class Account():
             feed_items = []
             feed_name = ""
             
-            for item in data['stories']:
+            for item in data:
+                item['published_at'] = item['story_timestamp']
+                item['created_at'] = item['story_timestamp']
+                item['url'] = item['story_permalink']
+                item['title'] = item['story_title']
+                item['body'] = item['story_content']
+                item['author'] = item['story_authors']
+                if item['read_status'] is 0:
+                    item['read_status'] = False
+                else:
+                    item['read_status'] = True
+
                 item = self.validate_data(item)
+
                 for feed in self.feeds:
                     if item['story_feed_id'] == feed.feed_id:
                         feed_name = feed.title
+                        break
 
                 feed_items.append(FeedItem(item['id'],
-                                            item['story_timestamp'],
-                                            item['story_timestamp'],
-                                            item['story_permalink'],
-                                            item['story_title'],
+                                            int(item['created_at']),
+                                            int(item['published_at']),
+                                            item['url'],
+                                            item['title'],
                                             item['starred'],
-                                            False,
-                                            item['story_content'],
-                                            item['story_authors'],
-                                            item['feed_id'],
+                                            item['read_status'],
+                                            item['body'],
+                                            item['author'],
+                                            item['story_feed_id'],
                                             feed_name,
-                                            self.service),
-                                            item['story_hash'])
+                                            self.service,
+                                            item['story_hash']))
 
             if len(data) is 0:
                 feed_items.append(FeedItem(0,
@@ -426,14 +453,14 @@ class Account():
                     return self.process_data(data)
 
             if self.service == "NewsBlur":
-                try:
+                # try:
                     ret = self.key.get(NB_API_URL + "reader/starred_stories")
-                    data = json.loads(ret.json())
+                    data = json.loads(ret.text)
                     if ret.status_code is not 200:
                         return "No feed found"
                     else:
-                        return self.process_data(data)
-                except:
+                        return self.process_data(data['stories'])
+                # except:
                     return "No Starred Items Found"
                 
         except:
@@ -453,7 +480,7 @@ class Account():
                     return self.process_data(data)
 
             if self.service == "Feedbin":
-                ret = self.key.get(FB_API_URL + "/feeds/" + str(feed.feed_id) + "/entries.json?page=1&per_page=25",
+                ret = self.key.get(FB_API_URL + "feeds/" + str(feed.feed_id) + "/entries.json?page=1&per_page=25",
                                   headers = head,
                                   auth=(self.username, self.password))
                 data = json.loads(ret.text)
@@ -465,11 +492,11 @@ class Account():
             if self.service == "NewsBlur":
                 try:
                     ret = self.key.get(NB_API_URL + "reader/feed/" + str(feed.feed_id))
-                    data = json.loads(ret.json())
+                    data = json.loads(ret.text)
                     if ret.status_code is not 200:
                         return "No feed found"
                     else:
-                        return self.process_data(data)
+                        return self.process_data(data['stories'])
                 except:
                     return "No Starred Items Found"
 
@@ -489,7 +516,7 @@ class Account():
                     return self.process_data(data)
 
             if self.service == "Feedbin":
-                ret = self.key.get(FB_API_URL + "unread_entries.json", auth=(self.username, self.password))
+                ret = self.key.get(FB_API_URL + "unread_entries.json", auth=(self.username, self.password), headers=head)
                 unread = json.loads(ret.text)
                 idstring = ""
                 for idnum in unread:
@@ -507,18 +534,33 @@ class Account():
                     return self.process_data(data)
 
             if self.service == "NewsBlur":
-                payload = {"read_filter" : "unread", "order" : "newest"}
-                try:
-                    ret = self.key.get(NB_API_URL + "reader/river_stories", data = payload)
-                    data = json.loads(ret)
+                ret = self.key.get("http://www.newsblur.com/reader/unread_story_hashes")
+                data = json.loads(ret.text)
 
-                    if ret.status_code is not 200:
-                        return "Can't Download Items"
-                    else:
-                        return self.process_data(data)
-                    
-                except:
-                    return "No feed items founds"
+                f = open("debug.txt", 'a')
+
+                count = 0
+                hashstring = ""
+                for key in data['unread_feed_story_hashes'].keys():
+                    for item in data['unread_feed_story_hashes'][key]:
+                        f.write(item + "\n")
+                        hashstring += "h=" + item + "&"
+                        count+=1
+                        if count == 99:
+                            break
+                hashstring = hashstring[:-1]
+
+                ret = self.key.get("http://www.newsblur.com/reader/river_stories?" + hashstring)
+                data = json.loads(ret.text)
+                f.close()
+
+
+                if ret.status_code is not 200:
+                    return "Can't Download Items"
+                else:
+                    return self.process_data(data['stories'])
+        # except:
+        #     return "Error Reaching Server"
 
 
     def encrypt(self, key, plaintext):
@@ -531,7 +573,7 @@ class Account():
 
 
     def save_user_info(self):
-        self.password = self.encrypt(self.fipp_pw, self.password)
+        # self.password = self.encrypt(self.fipp_pw, self.password)
         outFile = open("user_info", "wb")
         pickle.dump(self, outFile)
         outFile.close()
@@ -542,7 +584,7 @@ class Account():
             f = open("user_info", "rb")
             data = f.read()
             uaccount = pickle.loads(data)
-            uaccount.password = self.decrypt(self.fipp_pw, uaccount.password).decode("utf-8")
+            # uaccount.password = self.decrypt(self.fipp_pw, uaccount.password).decode("utf-8")
             uaccount.load_feeds()
             f.close()
             service = uaccount.service
@@ -550,7 +592,6 @@ class Account():
             if service == "Feed Wrangler" or service == "Feedbin" or service == "NewsBlur":
                 return uaccount
             else:
-                f.close()
                 return False
         else:
             return False
@@ -597,22 +638,28 @@ class Account():
                 return "Error Reaching Feedbin Server"
 
         if self.service == "NewsBlur":
-            try:
+            # try:
                 payload = {"flat" : True}
-                ret = s.get("http://www.newsblur.com/reader/feeds", data = payload)
-                data = json.loads(ret)
-                for feed in data:
-                    feed_sub = Feed(feed['feed_title'],
-                                    feed['id'],
-                                    feed['feed_address'],
-                                    feed['feed_link'],
+                ret = self.key.get("http://www.newsblur.com/reader/feeds", data = payload)
+                data = json.loads(ret.text)
+                f = open("debug.txt", "w")
+                f.write(self.username + "\n")
+                f.write(self.password + "\n")
+                f.write(self.user_id + "\n")
+                self.feeds = []
+                for key in data['feeds'].keys():
+                    f.write(data['feeds'][key]['feed_title'] + "\n")
+                    feed_sub = Feed(data['feeds'][key]['feed_title'],
+                                    data['feeds'][key]['id'],
+                                    data['feeds'][key]['feed_address'],
+                                    data['feeds'][key]['feed_link'],
                                     self)
                     self.feeds.append(feed_sub)
+                f.close()
 
-                    self.save_user_info()  
-            except:
+                self.save_user_info()  
+            # except:
                 return "Error Reaching NewsBlur Server"
-
 
     def change_star_status(self, item_id, status, feed_id):
        if self.service == "Feed Wrangler":

@@ -4,7 +4,7 @@
 
 Fipp is designed to work with online RSS feed tracking services, rather than manage subscriptions itself. This is so your changes propagate across all your devices.
 
-Fipp is currently in alpha so it is quite buggy, any bug reports would be greatly appreciated.
+Fipp is currently in alpha has some bugs, any bug reports would be greatly appreciated.
 
 * Screenshots
 [[Main Screen][https://github.com/apierz/fipp/blob/master/screenshots/mainscreen.png?raw=true]]
@@ -15,19 +15,18 @@ Fipp is currently in alpha so it is quite buggy, any bug reports would be greatl
 
 
 * Todo
-You can check the todo list for features to be added
+You can check the todo list for features to be added and see what is being worked on
 
 * Service Support
 
-** Feed Wrangler
+- [X] Feedwrangler
+- [X] Feedbin
+- [X] NewsBlur
 
-** Feedbin 
+** Not Yet Supported
 
-** Newsblur 
-In Progress
-
-** Feedly
+*** Feedly
 Stopped giving out API keys, will add when they start again
 
-** Fever
-Investigating
+*** Fever
+Investigating API, likely to be supported in future

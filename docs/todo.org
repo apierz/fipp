@@ -3,20 +3,24 @@
 * README
 - [X] start
 - [X] screenshots
+- [ ] update screenshots
 
 * CURRENT core
 - [X] start
-- [ ] settings/menu
+- [-] settings/menu [1/4]
   - [ ] account ctrls
   - [ ] logout
+  - [ ] scrollbar toggle
+  - [X] color settings
 - [X] add/remove feeds
-** Unread Item View [2/2]
+** Unread Item View [3/3]
    - [X] show change in status indicators in bottom bar
    - [X] show all starred items
-   - [ ] fix marking read not scrolling down to next option
+   - [X] fix marking read not scrolling down to next option
 ** Feed List View [2/2]
    - [X] show current feeds + unread count
    - [X] -> list of 25 most recent articles from that feed
+     - [ ] get 25 items when using a NewsBlur account
 ** Item Content View [3/3]
    - [X] show starred status in bottom bar
    - [X] show read status in bottom bar
@@ -56,5 +60,6 @@ https://pypi.python.org/pypi/EncryptedPickle/0.1.4
 ** DONE add feedwrangler 
 - [X] error handling
 ** DONE add feedbin
-** CURRENT add newsblur
+** DONE add newsblur
 ** add feedly
+- [ ] get API key

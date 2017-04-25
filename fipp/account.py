@@ -638,7 +638,7 @@ class Account():
                 return "Error Reaching Feedbin Server"
 
         if self.service == "NewsBlur":
-            # try:
+            try:
                 payload = {"flat" : True}
                 ret = self.key.get("http://www.newsblur.com/reader/feeds", data = payload)
                 data = json.loads(ret.text)
@@ -658,7 +658,7 @@ class Account():
                 f.close()
 
                 self.save_user_info()  
-            # except:
+            except:
                 return "Error Reaching NewsBlur Server"
 
     def change_star_status(self, item_id, status, feed_id):
@@ -708,7 +708,7 @@ class Account():
             try:
                 response = urllib.request.urlopen(FW_API_URL + "feed_items/update?access_token=" +
                                                     self.key + "&feed_item_id=" +
-                                                    str(item.item_id) + "&read=" +
+                                                    str(item.feed_item_id) + "&read=" +
                                                     str(status).lower()).read()
 
                 data = json.loads(response.decode())
@@ -717,7 +717,7 @@ class Account():
                 else:
                     return True
             except:
-                return "Error reaching server"
+                return "Error updating read status"
 
         if self.service == "Feedbin":
             try:

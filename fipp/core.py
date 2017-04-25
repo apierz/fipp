@@ -227,10 +227,17 @@ def display_item_body(pos, content, unread_items, account):
                                   [account.sf_col, account.sb_col])
     content_view.refresh_display()
 
-    content_view.bottom_bar.update_bar(unread_items[pos].get_date_time() + \
-                                          unread_items[pos].feed_title + " - " +\
-                                          unread_items[pos].title + " by: " +\
-                                          unread_items[pos].author)
+    bar_string = unread_items[pos].get_date_time() + \
+                 unread_items[pos].feed_title.rstrip() + " - " +\
+                 unread_items[pos].title.rstrip()
+
+    f = open("debug.txt", "w")
+    f.write(unread_items[pos].author)
+    f.close()
+    if unread_items[pos].author:
+        bar_string += " By " + unread_items[pos].author.replace('\n', '').replace('\r', '')
+
+    content_view.bottom_bar.update_bar(bar_string)
 
     #attempt to update read status
     result = account.change_read_status(unread_items[pos], True)

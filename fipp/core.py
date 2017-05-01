@@ -160,10 +160,6 @@ def display_settings(account):
     settings_view.list_items[9].selected_index = settings_view.list_items[9].options.index(num_to_color(account.sb_col))
     settings_view.list_items[10].selected_item = account.unread_icon
 
-    if account.unread_icon is "•":
-        settings_view.list_items[10].selected_index = 1
-    else:
-        settings_view.list_items[10].selected_index = 0
 
     settings_view.list_items[11].selected_item = str(account.scrollbar_vis)
     if account.scrollbar_vis is "True":
@@ -190,7 +186,7 @@ def display_settings(account):
         elif c == curses.KEY_UP or c == ord('k'):
             settings_view.scrollup_list()
         elif c == curses.KEY_UP or c == ord('c'):
-            if settings_view.highlight_pos > 0 and settings_view.highlight_pos <= 9 or settings_view.highlight_pos is 11:
+            if settings_view.highlight_pos > 0 and settings_view.highlight_pos <=  11:
                 settings_view.cycle_options(settings_view.highlight_pos)
                 account.color_changed = True
                 if settings_view.highlight_pos is 0:
@@ -213,6 +209,8 @@ def display_settings(account):
                     account.sf_col = color_to_num(settings_view.list_items[8].selected_item)
                 if settings_view.highlight_pos is 9:
                     account.sb_col = color_to_num(settings_view.list_items[9].selected_item)
+                if settings_view.highlight_pos is 10:
+                    account.unread_icon = settings_view.list_items[10].selected_item
                 if settings_view.highlight_pos is 11:
                     if settings_view.list_items[11].selected_item is True:
                         account.scrollbar_vis = True

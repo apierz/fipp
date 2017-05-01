@@ -120,7 +120,7 @@ class Account():
                      hf_col = 7, hb_col = 3, tf_col = 7, tb_col = 4,
                      sf_col = 4, sb_col = 0,
                      fipp_pw = "toomanysecrets", user_id = "", unread_icon = "•",
-                     scrollbar_vis = True):
+                     scrollbar_vis = True, content_width = 80):
         
         self.bf_col = bf_col
         self.bb_col = bb_col
@@ -135,6 +135,7 @@ class Account():
         self.color_changed = False
         self.unread_icon = unread_icon
         self.scrollbar_vis = True
+        self.content_width = content_width
         
         self.service = service
         self.username = username
@@ -182,6 +183,9 @@ class Account():
     def data_migration(self):
         if hasattr(self, 'scrollbar_vis') is False:
             setattr(self, 'scrollbar_vis', True)
+        if hasattr(self, 'content_width') is False:
+            setattr(self, 'content_width', 80)
+        
 
     def add_feed(self, url):
         if self.service == "Feed Wrangler":

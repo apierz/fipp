@@ -169,7 +169,7 @@ def display_settings(account):
     if account.scrollbar_vis is "True":
         settings_view.list_items[11].selected_index = 1
     else:
-        settings_view.list_items[11].selected_index = 2
+        settings_view.list_items[11].selected_index = 1
         
 
     stdscr.clear()
@@ -260,7 +260,8 @@ def display_settings(account):
             break  # Exit the while loop
 
 def display_item_body(pos, content, unread_items, account):
-    content_view = CCV_con(stdscr, content, 80, "q:Back  m:Mark (un)read  s:(un)Star  n:Next  p:Prev", "Title, Info, Etc",
+    content_view = CCV_con(stdscr, content, account.content_width,
+                               "q:Back  m:Mark (un)read  s:(un)Star  n:Next  p:Prev", "Title, Info, Etc",
                                   [account.bf_col, account.bb_col], [account.bf_col, account.bb_col],
                                   [account.mf_col, account.mb_col], account.scrollbar_vis,
                                   [account.sf_col, account.sb_col])
@@ -323,6 +324,12 @@ def display_item_body(pos, content, unread_items, account):
             content_view.scrollright()
         elif c == curses.KEY_LEFT or c == ord('h'):
             content_view.scrollleft()
+        elif c == ord('['):
+            if content_view.shrink_content_width() is True:
+                account.content_width -=1
+        elif c == ord(']'):
+            if content_view.grow_content_width() is True:
+                account.content_width +=1
         elif c == ord('m'):
             read = None
             if unread_items[pos].read is True:

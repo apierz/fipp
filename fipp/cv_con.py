@@ -227,6 +227,37 @@ class CCV_con():
                                         filler_string,
                                         curses.color_pair(self.content_colors_index))
 
+    def clear_display(self):
+        lines = ((len(self.content)/self.content_width) * 4) + curses.LINES
+
+        lines = int(lines)+1
+        self.content_pad = curses.newpad(lines, self.padding_width )
+
+        filler_string = self._get_filler_string_content()
+        for x in range (0,lines):
+            self.content_pad.addstr(x, 0,
+                                        filler_string,
+                                        curses.color_pair(self.content_colors_index))
+        
+
+    def grow_content_width(self):
+        if self.content_width > 20:
+            self.content_width += 1
+            self.clear_display()
+            self.refresh_display()
+            return True
+        else:
+            return False
+
+    def shrink_content_width(self):
+        if self.content_width > 20:
+            self.content_width -= 1
+            self.clear_display()
+            self.refresh_display()
+            return True
+        else:
+            return False
+
     def resize_con(self):
         #Resize and redisplay the controller, in response to term resizing
         y, x = self.stdscr.getmaxyx()

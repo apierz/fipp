@@ -119,7 +119,7 @@ class Account():
                      bf_col = 7, bb_col = 0, mf_col = 0, mb_col = 7,
                      hf_col = 7, hb_col = 3, tf_col = 7, tb_col = 4,
                      sf_col = 4, sb_col = 0,
-                     fipp_pw = "toomanysecrets", user_id = ""):
+                     fipp_pw = "toomanysecrets", user_id = "", unread_icon = "•"):
         
         self.bf_col = bf_col
         self.bb_col = bb_col
@@ -132,6 +132,8 @@ class Account():
         self.sf_col = sf_col
         self.sb_col = sb_col
         self.color_changed = False
+        self.unread_icon = unread_icon
+
         
         self.service = service
         self.username = username
@@ -573,7 +575,7 @@ class Account():
 
 
     def save_user_info(self):
-        # self.password = self.encrypt(self.fipp_pw, self.password)
+        self.password = self.encrypt(self.fipp_pw, self.password)
         outFile = open("user_info", "wb")
         pickle.dump(self, outFile)
         outFile.close()
@@ -584,7 +586,7 @@ class Account():
             f = open("user_info", "rb")
             data = f.read()
             uaccount = pickle.loads(data)
-            # uaccount.password = self.decrypt(self.fipp_pw, uaccount.password).decode("utf-8")
+            uaccount.password = self.decrypt(self.fipp_pw, uaccount.password).decode("utf-8")
             uaccount.load_feeds()
             f.close()
             service = uaccount.service

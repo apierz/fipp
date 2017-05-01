@@ -24,6 +24,11 @@ def add_account(account):
                                 "Verify Account Info", [account.bf_col, account.bb_col], [account.bf_col, account.bb_col],
                                   [account.mf_col, account.mb_col], [account.hf_col, account.hb_col],
                                   [account.tf_col, account.tb_col])
+
+        account_view.list_items[0].selected_item = account.service
+        account_view.list_items[1].selected_item = account.username
+        account_view.list_items[2].selected_item = account.password
+        
     else:
         account_view = CFLV_con(stdscr, account_view_info,
                                 "q:Back  c:Cycle Options  r:Reset to default  e:Edit",
@@ -47,7 +52,8 @@ def add_account(account):
         elif c == curses.KEY_UP or c == ord('c'):
             account_view.cycle_options(account_view.highlight_pos)
         elif c == curses.KEY_UP or c == ord('e'):
-            account_view.custom_option(account_view.highlight_pos)
+            if account_view.highlight_pos >= 1:
+                account_view.custom_option(account_view.highlight_pos)
         elif c == curses.KEY_UP or c == ord('r'):
             account_view.reset_to_default(account_view.highlight_pos)
         elif c == curses.KEY_ENTER or c == 10 or c == 13:
@@ -119,10 +125,12 @@ def display_settings(account):
                      ["Scrollbar Foreground", "White", "Black", "Red", "Green",
                           "Yellow", "Blue", "Magenta", "Cyan"],
                      ["Scrollbar Background", "Blue", "Black", "White", "Red",
-                          "Green", "Yellow", "Magenta", "Cyan"]]
+                          "Green", "Yellow", "Magenta", "Cyan"],
+                     ["Unread Icon", "•", "◦", "u", "ө"],
+                     "Account Settings"]
 
     settings_view = CFLV_con(stdscr, settings_menu,
-                                 "q:Back  c:Cycle Options  r:Reset to default",
+                                 "q:Back  c:Cycle Options  r:Reset to default  e:Edit",
                                  "Options",
                                  [account.bf_col, account.bb_col],
                                  [account.bf_col, account.bb_col],
@@ -149,6 +157,12 @@ def display_settings(account):
     settings_view.list_items[8].selected_index = settings_view.list_items[8].options.index(num_to_color(account.sf_col))
     settings_view.list_items[9].selected_item = num_to_color(account.sb_col)
     settings_view.list_items[9].selected_index = settings_view.list_items[9].options.index(num_to_color(account.sb_col))
+    settings_view.list_items[10].selected_item = account.unread_icon
+
+    if account.unread_icon is "•":
+        settings_view.list_items[10].selected_index = 1
+    else:
+        settings_view.list_items[10].selected_index = 0
 
     stdscr.clear()
     stdscr.refresh()
@@ -168,28 +182,29 @@ def display_settings(account):
         elif c == curses.KEY_UP or c == ord('k'):
             settings_view.scrollup_list()
         elif c == curses.KEY_UP or c == ord('c'):
-            settings_view.cycle_options(settings_view.highlight_pos)
-            account.color_changed = True
-            if settings_view.highlight_pos is 0:
-                account.bf_col = color_to_num(settings_view.list_items[0].selected_item)
-            if settings_view.highlight_pos is 1:
-                account.bb_col = color_to_num(settings_view.list_items[1].selected_item)
-            if settings_view.highlight_pos is 2:
-                account.mf_col = color_to_num(settings_view.list_items[2].selected_item)
-            if settings_view.highlight_pos is 3:
-                account.mb_col = color_to_num(settings_view.list_items[3].selected_item)
-            if settings_view.highlight_pos is 4:
-                account.hf_col = color_to_num(settings_view.list_items[4].selected_item)
-            if settings_view.highlight_pos is 5:
-                account.hb_col = color_to_num(settings_view.list_items[5].selected_item)
-            if settings_view.highlight_pos is 6:
-                account.tf_col = color_to_num(settings_view.list_items[6].selected_item)
-            if settings_view.highlight_pos is 7:
-                account.tb_col = color_to_num(settings_view.list_items[7].selected_item)
-            if settings_view.highlight_pos is 8:
-                account.sf_col = color_to_num(settings_view.list_items[8].selected_item)
-            if settings_view.highlight_pos is 9:
-                account.sb_col = color_to_num(settings_view.list_items[9].selected_item)
+            if settings_view.highlight_pos > 0 and settings_view.highlight_pos <= 9:
+                settings_view.cycle_options(settings_view.highlight_pos)
+                account.color_changed = True
+                if settings_view.highlight_pos is 0:
+                    account.bf_col = color_to_num(settings_view.list_items[0].selected_item)
+                if settings_view.highlight_pos is 1:
+                    account.bb_col = color_to_num(settings_view.list_items[1].selected_item)
+                if settings_view.highlight_pos is 2:
+                    account.mf_col = color_to_num(settings_view.list_items[2].selected_item)
+                if settings_view.highlight_pos is 3:
+                    account.mb_col = color_to_num(settings_view.list_items[3].selected_item)
+                if settings_view.highlight_pos is 4:
+                    account.hf_col = color_to_num(settings_view.list_items[4].selected_item)
+                if settings_view.highlight_pos is 5:
+                    account.hb_col = color_to_num(settings_view.list_items[5].selected_item)
+                if settings_view.highlight_pos is 6:
+                    account.tf_col = color_to_num(settings_view.list_items[6].selected_item)
+                if settings_view.highlight_pos is 7:
+                    account.tb_col = color_to_num(settings_view.list_items[7].selected_item)
+                if settings_view.highlight_pos is 8:
+                    account.sf_col = color_to_num(settings_view.list_items[8].selected_item)
+                if settings_view.highlight_pos is 9:
+                    account.sb_col = color_to_num(settings_view.list_items[9].selected_item)
 
         elif c == curses.KEY_UP or c == ord('r'):
             settings_view.reset_to_default(settings_view.highlight_pos)
@@ -211,10 +226,21 @@ def display_settings(account):
             if settings_view.highlight_pos is 7:
                 account.tb_col = color_to_num(settings_view.list_items[7].selected_item)
             if settings_view.highlight_pos is 8:
-                account.sf_col = color_to_num(settings_view.list_items[7].selected_item)
+                account.sf_col = color_to_num(settings_view.list_items[8].selected_item)
             if settings_view.highlight_pos is 9:
-                account.sb_col = color_to_num(settings_view.list_items[7].selected_item)
+                account.sb_col = color_to_num(settings_view.list_items[9].selected_item)
+            if settings_view.highlight_pos is 10:
+                account.unread_icon = "•"
 
+        elif c == ord('e'):
+            if settings_view.highlight_pos > 9:
+                settings_view.custom_option(settings_view.highlight_pos)
+                account.unread_icon = settings_view.list_items[10].selected_item[0]
+
+        elif c == curses.KEY_ENTER or c == 10 or c == 13:
+            if settings_view.highlight_pos is 11:
+                add_account(account)
+                
         elif c == ord('q'):
             account.save_user_info()
             return False
@@ -255,7 +281,7 @@ def display_item_body(pos, content, unread_items, account):
 
     while True:
         if unread_items[pos].read is False:
-            content_view.bottom_bar.left_flags[2] = "•"
+            content_view.bottom_bar.left_flags[2] = account.unread_icon[0]
         if unread_items[pos].read is True:
             content_view.bottom_bar.left_flags[2] = "-"
 
@@ -422,7 +448,7 @@ def display_feed_items(items, account):
 
         for pos, item in enumerate(items):
             if item.read is False:
-                item_list_view.list_items[pos].flags[1] = "•"
+                item_list_view.list_items[pos].flags[1] = account.unread_icon[0]
                 unread_count += 1
             if item.read is True:
                 item_list_view.list_items[pos].flags[1] = " "
@@ -433,7 +459,7 @@ def display_feed_items(items, account):
                 item_list_view.list_items[pos].flags[3] = " "
 
         if read_mod is True:
-            item_list_view.bottom_bar.left_flags[2] = "•"
+            item_list_view.bottom_bar.left_flags[2] = account.unread_icon[0]
         if read_mod is False:
             item_list_view.bottom_bar.left_flags[2] = "-"
 
@@ -569,7 +595,7 @@ def main(stdscr):
         if error_flag is False:
             for pos, item in enumerate(unread_items):
                 if item.read is False:
-                    item_list_view.list_items[pos].flags[1] = "•"
+                    item_list_view.list_items[pos].flags[1] = account.unread_icon
                 if item.read is True:
                     item_list_view.list_items[pos].flags[1] = " "
 
@@ -579,7 +605,7 @@ def main(stdscr):
                     item_list_view.list_items[pos].flags[3] = " "
 
             if read_mod is True:
-                item_list_view.bottom_bar.left_flags[2] = "•"
+                item_list_view.bottom_bar.left_flags[2] = account.unread_icon
             if read_mod is False:
                 item_list_view.bottom_bar.left_flags[2] = "-"
 
@@ -617,6 +643,7 @@ def main(stdscr):
                     item_headers.append(item.get_header_string())
                 item_list_view.update_list_items(item_headers)
                 error_flag = False
+                item_list_view.highlight_pos = 0
 
             
         elif c == ord('o'):

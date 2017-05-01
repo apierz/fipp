@@ -191,9 +191,6 @@ class CCV_con():
         self.content_lines = 0
         self.table_holder = []
 
-        # if len(content)/self.content_width + 1 < curses.LINES:
-            # lines = curses.LINES + 1
-        # else:
         lines = ((len(content)/self.content_width) * 4) + curses.LINES
 
         lines = int(lines)+1
@@ -204,6 +201,8 @@ class CCV_con():
             self.content_pad.addstr(x, 0,
                                         filler_string,
                                         curses.color_pair(self.content_colors_index))
+
+        self.scrollbars = scrollbars
 
         if scrollbars is True:
             color = create_color_pair(scrollbar_colors[0], scrollbar_colors[1])
@@ -251,8 +250,10 @@ class CCV_con():
         self._string_content_handler()
 
         self.content_pad.refresh(0,0, 1,0, curses.LINES - 2,curses.COLS - 1)
-        self.vscrollbar.update(self.v_scroll_position, self.content_lines)
-        self.hscrollbar.update(self.h_scroll_position, self.content_width)
+
+        if self.scrollbars is True:
+            self.vscrollbar.update(self.v_scroll_position, self.content_lines)
+            self.hscrollbar.update(self.h_scroll_position, self.content_width)
 
     def _string_content_handler(self):
         #Deterimines if content string is plain text or html and parses it
@@ -494,8 +495,9 @@ class CCV_con():
             self.scroll_ind_check()
             self.top_bar.update_bar()
             self.bottom_bar.update_bar()
-            self.vscrollbar.update(self.v_scroll_position, (self.content_lines))
-            self.hscrollbar.update(self.h_scroll_position, self.content_width)
+            if self.scrollbars is True:
+                self.vscrollbar.update(self.v_scroll_position, (self.content_lines))
+                self.hscrollbar.update(self.h_scroll_position, self.content_width)
 
     def scrollright(self):
         #scrolls the display right
@@ -509,8 +511,9 @@ class CCV_con():
             self.scroll_ind_check()
             self.top_bar.update_bar()
             self.bottom_bar.update_bar()
-            self.vscrollbar.update(self.v_scroll_position, (self.content_lines))
-            self.hscrollbar.update(self.h_scroll_position, self.content_width)
+            if self.scrollbars is True:
+                self.vscrollbar.update(self.v_scroll_position, (self.content_lines))
+                self.hscrollbar.update(self.h_scroll_position, self.content_width)
 
 
     def scrollleft(self):

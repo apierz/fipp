@@ -127,6 +127,7 @@ def display_settings(account):
                      ["Scrollbar Background", "Blue", "Black", "White", "Red",
                           "Green", "Yellow", "Magenta", "Cyan"],
                      ["Unread Icon", "•", "◦", "u", "ө"],
+                     ["Scrollbars On", "True", "False"],
                      "Account Settings"]
 
     settings_view = CFLV_con(stdscr, settings_menu,
@@ -164,6 +165,13 @@ def display_settings(account):
     else:
         settings_view.list_items[10].selected_index = 0
 
+    settings_view.list_items[11].selected_item = str(account.scrollbar_vis)
+    if account.scrollbar_vis is "True":
+        settings_view.list_items[11].selected_index = 1
+    else:
+        settings_view.list_items[11].selected_index = 2
+        
+
     stdscr.clear()
     stdscr.refresh()
     settings_view.refresh_display()
@@ -182,7 +190,7 @@ def display_settings(account):
         elif c == curses.KEY_UP or c == ord('k'):
             settings_view.scrollup_list()
         elif c == curses.KEY_UP or c == ord('c'):
-            if settings_view.highlight_pos > 0 and settings_view.highlight_pos <= 9:
+            if settings_view.highlight_pos > 0 and settings_view.highlight_pos <= 9 or settings_view.highlight_pos is 11:
                 settings_view.cycle_options(settings_view.highlight_pos)
                 account.color_changed = True
                 if settings_view.highlight_pos is 0:
@@ -205,6 +213,11 @@ def display_settings(account):
                     account.sf_col = color_to_num(settings_view.list_items[8].selected_item)
                 if settings_view.highlight_pos is 9:
                     account.sb_col = color_to_num(settings_view.list_items[9].selected_item)
+                if settings_view.highlight_pos is 11:
+                    if settings_view.list_items[11].selected_item is True:
+                        account.scrollbar_vis = True
+                    else:
+                        account.scrollbar_vis = False
 
         elif c == curses.KEY_UP or c == ord('r'):
             settings_view.reset_to_default(settings_view.highlight_pos)
@@ -238,7 +251,7 @@ def display_settings(account):
                 account.unread_icon = settings_view.list_items[10].selected_item[0]
 
         elif c == curses.KEY_ENTER or c == 10 or c == 13:
-            if settings_view.highlight_pos is 11:
+            if settings_view.highlight_pos is 12:
                 add_account(account)
                 
         elif c == ord('q'):
@@ -249,7 +262,7 @@ def display_settings(account):
 def display_item_body(pos, content, unread_items, account):
     content_view = CCV_con(stdscr, content, 80, "q:Back  m:Mark (un)read  s:(un)Star  n:Next  p:Prev", "Title, Info, Etc",
                                   [account.bf_col, account.bb_col], [account.bf_col, account.bb_col],
-                                  [account.mf_col, account.mb_col], True,
+                                  [account.mf_col, account.mb_col], account.scrollbar_vis,
                                   [account.sf_col, account.sb_col])
     content_view.refresh_display()
 
@@ -568,6 +581,8 @@ def main(stdscr):
 
     while account is False:
         account = add_account(account)
+
+    account.data_migration()
 
     result = unread_items = account.get_unread_items()
     item_headers = []

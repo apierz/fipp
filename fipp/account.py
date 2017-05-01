@@ -119,7 +119,8 @@ class Account():
                      bf_col = 7, bb_col = 0, mf_col = 0, mb_col = 7,
                      hf_col = 7, hb_col = 3, tf_col = 7, tb_col = 4,
                      sf_col = 4, sb_col = 0,
-                     fipp_pw = "toomanysecrets", user_id = "", unread_icon = "•"):
+                     fipp_pw = "toomanysecrets", user_id = "", unread_icon = "•",
+                     scrollbar_vis = True):
         
         self.bf_col = bf_col
         self.bb_col = bb_col
@@ -133,7 +134,7 @@ class Account():
         self.sb_col = sb_col
         self.color_changed = False
         self.unread_icon = unread_icon
-
+        self.scrollbar_vis = True
         
         self.service = service
         self.username = username
@@ -177,6 +178,10 @@ class Account():
                 self.user_id = str(data['user_id'])
                 self.load_feeds()
                 self.save_user_info()
+
+    def data_migration(self):
+        if hasattr(self, 'scrollbar_vis') is False:
+            setattr(self, 'scrollbar_vis', True)
 
     def add_feed(self, url):
         if self.service == "Feed Wrangler":

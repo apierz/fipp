@@ -7,9 +7,8 @@
 
 * CURRENT core
 - [X] start
-- [-] settings/menu [1/4]
-  - [ ] account ctrls
-  - [ ] logout
+- [-] settings/menu [2/4]
+  - [X] account ctrls
   - [ ] scrollbar toggle
   - [X] color settings
 - [X] add/remove feeds
@@ -17,6 +16,7 @@
    - [X] show change in status indicators in bottom bar
    - [X] show all starred items
    - [X] fix marking read not scrolling down to next option
+   - [ ] help menu with full shortcut listing
 ** Feed List View [2/2]
    - [X] show current feeds + unread count
    - [X] -> list of 25 most recent articles from that feed

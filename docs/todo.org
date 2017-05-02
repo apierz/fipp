@@ -7,9 +7,9 @@
 
 * CURRENT core
 - [X] start
-- [-] settings/menu [2/4]
+- [X] settings/menu [3/3]
   - [X] account ctrls
-  - [ ] scrollbar toggle
+  - [X] scrollbar toggle
   - [X] color settings
 - [X] add/remove feeds
 ** Unread Item View [3/3]
@@ -28,9 +28,9 @@
 
 * CV_con
 - [ ] add bright color support
-** ONDECK content view controller [1/4]
+** ONDECK content view controller [2/4]
 - [ ] loading indicators
-- [ ] dynamic content width
+- [X] dynamic content width
 - [ ] scrolling bars
 - [X] scroll pos indicators
 *** DONE horizontal scrolling [2/2]

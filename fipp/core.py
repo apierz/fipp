@@ -300,15 +300,16 @@ def display_settings(account):
 
 def display_item_body(pos, content, unread_items, account):
     barstring = "q:Back  m:Mark (un)read  s:(un)Star  " +\
-        "n:Next  p:Prev", "Title, Info, Etc"
+        "n:Next  p:Prev"
 
     content_view = CCV_con(stdscr, content, account.content_width,
                            barstring,
+                           "Bottom String",
                            [account.bf_col, account.bb_col],
                            [account.bf_col, account.bb_col],
                            [account.mf_col, account.mb_col],
-                           account.scrollbar_vis,
-                           [account.sf_col, account.sb_col])
+                           [account.sf_col, account.sb_col],
+                           account.scrollbar_vis)
     content_view.refresh_display()
 
     bar_string = unread_items[pos].get_date_time() + \

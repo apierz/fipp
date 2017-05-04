@@ -53,13 +53,10 @@
 ** SOMEDAY Static List view controller
 - [ ] fix resize during text entry event
   
-* account
-** DONE user data protection
-   - [X] look into encrypting file, or encrypting pickle
-https://pypi.python.org/pypi/EncryptedPickle/0.1.4
-** DONE add feedwrangler 
-- [X] error handling
-** DONE add feedbin
-** DONE add newsblur
-** add feedly
-- [ ] get API key
+* CURRENT account [/]
+- [ ] add user password option
+- [X] add feed wrangler support
+- [X] add feedbin support
+- [X] add newsblur support
+- [ ] add feedly support
+

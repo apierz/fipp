@@ -114,6 +114,55 @@ def num_to_color(num):
     return color
 
 
+def display_password_menu(account):
+    password_menu = [["Fipp Password", ""],
+                     "Save Password"]
+
+    barstring = "q:Back  e:Edit  Enter:Confrim"
+    bot_string = "Password Menu"
+
+    password_view = CFLV_con(stdscr,
+                             password_menu,
+                             barstring,
+                             bot_string,
+                             [account.bf_col, account.bb_col],
+                             [account.bf_col, account.bb_col],
+                             [account.mf_col, account.mb_col],
+                             [account.hf_col, account.hb_col])
+
+    password_view.list_items[0].selected_item = ""
+
+    stdscr.clear()
+    stdscr.refresh()
+    password_view.refresh_display()
+
+    while True:
+
+        if account.color_changed is True:
+            update_color(password_view, account)
+        c = stdscr.getch()
+        if c == curses.KEY_RESIZE:
+            stdscr.clear()
+            password_view.resize_con()
+
+        elif c == ord('r'):
+            pass
+
+        elif c == ord('e'):
+            if password_view.highlight_pos > 9:
+                password_view.custom_option(password_view.highlight_pos)
+                account.unread_icon =\
+                    password_view.list_items[10].selected_item[0]
+
+        elif c == curses.KEY_ENTER or c == 10 or c == 13:
+            if password_view.highlight_pos is 12:
+                add_account(account)
+        elif c == ord('q'):
+            account.save_user_info()
+            return False
+            break  # Exit the while loop
+
+
 def display_settings(account):
     settings_menu = [["Bar Foreground", "White", "Black", "Red", "Green",
                       "Yellow", "Blue", "Magenta", "Cyan"],
@@ -137,7 +186,8 @@ def display_settings(account):
                       "Green", "Yellow", "Magenta", "Cyan"],
                      ["Unread Icon", "•", "◦", "u", "ө"],
                      ["Scrollbars On", "True", "False"],
-                     "Account Settings"]
+                     "Account Settings",
+                     "Fipp Password"]
 
     barstring = "q:Back  c:Cycle Options  r:Reset to default  e:Edit"
     settings_view = CFLV_con(stdscr, settings_menu,
@@ -204,7 +254,7 @@ def display_settings(account):
         elif c == curses.KEY_UP or c == ord('k'):
             settings_view.scrollup_list()
         elif c == curses.KEY_UP or c == ord('c'):
-            if settings_view.highlight_pos > 0 and\
+            if settings_view.highlight_pos >= 0 and\
                settings_view.highlight_pos <= 11:
                 settings_view.cycle_options(settings_view.highlight_pos)
                 account.color_changed = True

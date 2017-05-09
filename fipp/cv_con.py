@@ -241,7 +241,7 @@ class CCV_con():
                                         self.content_colors_index))
 
     def grow_content_width(self):
-        if self.content_width > 20:
+        if self.content_width < 200:
             self.content_width += 1
             self.clear_display()
             self.refresh_display()

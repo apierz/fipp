@@ -567,14 +567,10 @@ class Account():
                 ret = self.key.get(
                     "http://www.newsblur.com/reader/unread_story_hashes")
                 data = json.loads(ret.text)
-
-                f = open("debug.txt", 'a')
-
                 count = 0
                 hashstring = ""
                 for key in data['unread_feed_story_hashes'].keys():
                     for item in data['unread_feed_story_hashes'][key]:
-                        f.write(item + "\n")
                         hashstring += "h=" + item + "&"
                         count += 1
                         if count == 99:
@@ -585,7 +581,6 @@ class Account():
                     "http://www.newsblur.com/reader/river_stories?" +
                     hashstring)
                 data = json.loads(ret.text)
-                f.close()
                 if ret.status_code is not 200:
                     return "Can't Download Items"
                 else:
@@ -679,20 +674,14 @@ class Account():
                 ret = self.key.get(
                     "http://www.newsblur.com/reader/feeds", data=payload)
                 data = json.loads(ret.text)
-                f = open("debug.txt", "w")
-                f.write(self.username + "\n")
-                f.write(self.password + "\n")
-                f.write(self.user_id + "\n")
                 self.feeds = []
                 for key in data['feeds'].keys():
-                    f.write(data['feeds'][key]['feed_title'] + "\n")
                     feed_sub = Feed(data['feeds'][key]['feed_title'],
                                     data['feeds'][key]['id'],
                                     data['feeds'][key]['feed_address'],
                                     data['feeds'][key]['feed_link'],
                                     self)
                     self.feeds.append(feed_sub)
-                f.close()
 
                 self.save_user_info()
             except:

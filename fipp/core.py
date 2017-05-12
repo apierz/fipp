@@ -366,9 +366,6 @@ def display_item_body(pos, content, unread_items, account):
         unread_items[pos].feed_title.rstrip() + " - " +\
         unread_items[pos].title.rstrip()
 
-    f = open("debug.txt", "w")
-    f.write(unread_items[pos].author)
-    f.close()
     if unread_items[pos].author:
         bar_string += " By " +\
             unread_items[pos].author.replace('\n', '').replace('\r', '')
@@ -779,6 +776,8 @@ def main(stdscr):
                 item_list_view.update_list_items(item_headers)
                 error_flag = False
                 item_list_view.highlight_pos = 0
+                star_mod = False
+                read_mod = False
         elif c == ord('o'):
             display_settings(account)
         elif c == ord('q'):

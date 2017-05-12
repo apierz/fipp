@@ -1,5 +1,7 @@
 import curses
+from curses import textpad
 from html.parser import HTMLParser
+assert textpad
 
 color_pair_number = 1
 version = '0.1'
@@ -291,9 +293,6 @@ class CCV_con():
         # Deterimines if content string is plain text or html and parses it
         if "</html>" in self.content or\
            "<html>" in self.content or "</p>" in self.content:
-                f = open("raw_data.txt", "w")
-                f.write(self.content)
-                f.close()
                 parser = MyHTMLParser()
                 parser.feed(self.content)
                 parsed_string = parser.content
@@ -322,15 +321,9 @@ class CCV_con():
         ordered_list = False
         list_counter = 1
 
-        f = open("crash_data.txt", "w")
-
         for count, piece in enumerate(plist):
             first_half = ""
 
-            if type(piece) is str:
-                f.write(piece + "\n")
-            else:
-                f.write(str(piece) + "\n")
             if piece:
                 if piece == 2:
                     text_line += " *"

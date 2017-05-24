@@ -4,6 +4,7 @@
 - [X] start
 - [X] screenshots
 - [ ] update screenshots
+- [ ] record screencast
 
 * CURRENT core
 - [X] start
@@ -17,10 +18,10 @@
    - [X] show all starred items
    - [X] fix marking read not scrolling down to next option
    - [ ] help menu with full shortcut listing
-** Feed List View [2/2]
+** Feed List View [2/3]
    - [X] show current feeds + unread count
    - [X] -> list of 25 most recent articles from that feed
-     - [ ] get 25 items when using a NewsBlur account
+   - [ ] get 25 items when using a NewsBlur account
 ** Item Content View [3/3]
    - [X] show starred status in bottom bar
    - [X] show read status in bottom bar

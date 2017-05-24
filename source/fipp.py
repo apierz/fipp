@@ -2,8 +2,11 @@ import time
 import curses
 from curses import wrapper
 
-from fipp.cv_con import CDLV_con, CFLV_con, CCV_con
-from fipp.account import Account
+from cv_con import CDLV_con, CFLV_con, CCV_con
+from account import Account
+
+import requests
+from multiprocessing import Queue
 
 stdscr = curses.initscr()
 curses.start_color()
@@ -186,8 +189,7 @@ def display_settings(account):
                       "Green", "Yellow", "Magenta", "Cyan"],
                      ["Unread Icon", "•", "◦", "u", "ө"],
                      ["Scrollbars On", "True", "False"],
-                     "Account Settings",
-                     "Fipp Password"]
+                     "Account Settings"]
 
     barstring = "q:Back  c:Cycle Options  r:Reset to default  e:Edit"
     settings_view = CFLV_con(stdscr, settings_menu,

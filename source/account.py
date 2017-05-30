@@ -87,7 +87,7 @@ class FeedItem():
             min_string = str(t1.tm_min)
             if t1.tm_min < 10:
                 min_string = "0" + min_string
-            return str(hour_string)+":"+min_string + " "
+            return str(hour_string) + ":" + min_string + " "
         else:
             date_string = ""
             if t1.tm_mon < 10:
@@ -117,7 +117,7 @@ class Account():
 
     def __init__(self, username="", password="", service="", key="",
                  bf_col=7, bb_col=0, mf_col=0, mb_col=7,
-                 hf_col=7, hb_col=3, tf_col=7, tb_col=4,
+                 hf_col=7, hb_col=3, tf_col=0, tb_col=4,
                  sf_col=4, sb_col=0,
                  fipp_pw="toomanysecrets", user_id="", unread_icon="•",
                  scrollbar_vis=True, content_width=80):
@@ -197,14 +197,14 @@ class Account():
                                            "/subscriptions/" +
                                            "add_feed_and_wait?access_token=" +
                                            self.key + "&choose_first=true" +
-                                           "&feed_url="+url).read()
+                                           "&feed_url=" + url).read()
                 data = json.loads(response.decode())
                 if data['error']:
                     return data['error']
                 else:
                     return True
             except:
-                return data['error']
+                return data['Error Reaching Feed Wrangler Server']
 
         if self.service == "Feedbin":
             try:
